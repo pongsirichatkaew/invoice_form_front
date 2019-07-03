@@ -7,11 +7,11 @@
       </v-snackbar>
 
       <v-layout align-center justify-center row wrap fill-height>
-        <v-flex xs10 sm8 md6 lg4>
+        <v-flex xs4>
           <div class="relative">
             <div class="absolute">
               <v-img
-                src="https://solarsystem.nasa.gov/system/basic_html_elements/11561_Sun.png"
+                src="https://pbs.twimg.com/profile_images/1080545769034108928/CEzHCTpI_400x400.jpg"
                 aspect-ratio="1"
                 class="grey lighten-2 circularImage"
               >
@@ -72,11 +72,12 @@ export default {
           process.env.VUE_APP_API_INET +
             `/login/${this.email}/${this.password}`,
           {
-            headers: { Authorization: `f49949b6-4a03-41c6-9e10-15aca0c59114` }
+            headers: {
+              Authorization: `${process.env.VUE_APP_HEADER_AUTHORIZATION_INET}`
+            }
           }
         );
         console.log(result);
-       
       } catch (error) {
         if (error.response) {
           console.log(error.response.data);
