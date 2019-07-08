@@ -1,13 +1,13 @@
 <template>
   <v-app class="background">
     <v-container>
-      <v-snackbar v-model="snackbar" :color="colorSnackbar">
+      <v-snackbar v-model="snackbar" :color="colorSnackbar" right top>
         {{ textSnackbar }}
         <v-btn color="white" flat @click="snackbar = false">Close</v-btn>
       </v-snackbar>
 
       <v-layout align-center justify-center row wrap fill-height>
-        <v-flex xs4>
+        <v-flex xs8  sm5 md4>
           <div class="relative">
             <div class="absolute">
               <v-img
@@ -22,6 +22,7 @@
                 </template>
               </v-img>
             </div>
+
             <v-card class="boxshadow round">
               <v-container>
                 <v-card-text>
@@ -77,6 +78,7 @@ export default {
             }
           }
         );
+        this.$router.replace("/form");
         console.log(result);
       } catch (error) {
         if (error.response) {
@@ -104,8 +106,10 @@ export default {
   top: 0;
   left: 0;
   width: 100%;
-  height: 50%;
-  background-image: -webkit-linear-gradient(180deg, #30aaff, #2bcdfe);
+  height: 33%;
+  border-bottom-left-radius: 100%;
+  border-bottom-right-radius: 100%;
+  background-image: -webkit-linear-gradient(180deg, #00b09b, #96c93d);
 }
 .boxshadow {
   -webkit-box-shadow: 3px 0px 34px -6px rgba(209, 205, 209, 1);

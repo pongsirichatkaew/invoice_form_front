@@ -2,6 +2,10 @@ import Vue from "vue";
 import Router from "vue-router";
 import Home from "./views/Home.vue";
 import Login from "./views/Login.vue";
+import Dashboard from "./views/Dashboard.vue";
+import DashboardAdmin from "./views/DashboardAdmin.vue";
+import FormApproved from "./components/FormApprove.vue";
+import ManageUser from "./components/ManageUser.vue"
 Vue.use(Router);
 
 export default new Router({
@@ -10,8 +14,25 @@ export default new Router({
   routes: [
     {
       path: "/",
-      name: "login",
-      component: Login
+      name: "dashboard",
+      component: Dashboard
+    },
+    {
+      path: "/admin",
+      name: "admin",
+      component: DashboardAdmin,
+      children: [
+        {
+          path: "",
+          name: "formApproved",
+          component: FormApproved
+        },
+        {
+          path: "manage",
+          name: "manageUser",
+          component: ManageUser
+        }
+      ]
     },
     {
       path: "/about",
@@ -21,6 +42,11 @@ export default new Router({
       // which is lazy-loaded when the route is visited.
       component: () =>
         import(/* webpackChunkName: "about" */ "./views/About.vue")
+    },
+    {
+      path: "/login",
+      name: "login",
+      component: Login
     }
   ]
 });
