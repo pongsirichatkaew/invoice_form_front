@@ -24,11 +24,12 @@ export default new Vuex.Store({
       income: true,
       notIncome: false,
       otherIncome: false,
+      invoiceOtherDescription: "",
       invoiceFull: true,
       invoicePartial: false,
       invoiceDescription: "",
-      invoiceFullAmount:"",
-      invoicePartialAmount:"",
+      invoiceFullAmount: "",
+      invoicePartialAmount: ""
     }
   },
   getters: {
@@ -43,11 +44,15 @@ export default new Vuex.Store({
     },
     otherIncome: state => {
       return state.invoice.otherIncome;
+    },
+    invoiceFull: state => {
+      return state.invoice.invoiceFull;
+    },
+    invoicePartial: state => {
+      return state.invoice.invoicePartial;
     }
   },
   mutations: {
-    //method
-    //commit('increment')
 
     updateE1: (state, payload) => {
       state.e1 = payload;
@@ -60,6 +65,18 @@ export default new Vuex.Store({
     },
     updateOtherIncome: (state, payload) => {
       state.invoice.otherIncome = payload;
+    },
+    updatInvoiceFull: (state, payload) => {
+      state.invoice.invoiceFull = payload;
+    },
+    updatInvoiceFullAmount: (state, payload) => {
+      state.invoice.invoiceFullAmount = payload;
+    },
+    updatInvoicePartial: (state, payload) => {
+      state.invoice.invoicePartial = payload;
+    },
+    updatInvoicePartialAmount: (state, payload) => {
+      state.invoice.invoicePartialAmount = payload;
     },
     updateDialog: (state, payload) => {
       state.dialog = payload;
@@ -83,6 +100,16 @@ export default new Vuex.Store({
       state.invoice.sinceServiceMonth = "";
       state.invoice.toServiceYear = "";
       state.invoice.toServiceMonth = "";
+
+      state.invoice.income = true;
+      state.invoice.notIncome = false;
+      state.otherIncome = false;
+      state.invoice.invoiceOtherDescription = "";
+      state.invoice.invoiceFull = true;
+      state.invoice.invoicePartial = false;
+      state.invoice.invoiceDescription = "";
+      state.invoice.invoiceFullAmount = "";
+      state.invoice.invoicePartialAmount = "";
     },
     updateInvoiceInfo: (state, payload) => {
       state.invoice.invoiceNumber = payload.invoiceNumber;
@@ -97,6 +124,16 @@ export default new Vuex.Store({
       state.invoice.sinceServiceMonth = payload.sinceServiceMonth;
       state.invoice.toServiceYear = payload.toServiceYear;
       state.invoice.toServiceMonth = payload.toServiceMonth;
+
+      state.invoice.income = payload.income;
+      state.invoice.notIncome = payload.notIncome;
+      state.invoice.otherIncome = payload.otherIncome;
+      state.invoice.invoiceOtherDescription = payload.invoiceOtherDescription;
+      state.invoice.invoiceFull = payload.invoiceFull;
+      state.invoice.invoicePartial = payload.invoicePartial;
+      state.invoice.invoiceDescription = payload.invoiceDescription;
+      state.invoice.invoiceFullAmount = payload.invoiceFullAmount;
+      state.invoice.invoicePartialAmount = payload.invoicePartialAmount;
     }
   },
   actions: {
@@ -111,6 +148,12 @@ export default new Vuex.Store({
     },
     updateOtherIncome: ({ commit }, payload) => {
       commit("updateOtherIncome", payload);
+    },
+    updatInvoiceFull: ({ commit }, payload) => {
+      commit("updatInvoiceFull", payload);
+    },
+    updatInvoicePartial: ({ commit }, payload) => {
+      commit("updatInvoicePartial", payload);
     }
   }
 });

@@ -14,7 +14,13 @@
           </v-flex>
 
           <v-flex xs12 md4>
-            <v-select :value="invoice.sinceServiceMonth" :items="itemsMonth" disabled label="เดือน" required></v-select>
+            <v-select
+              :value="invoice.sinceServiceMonth"
+              :items="itemsMonth"
+              disabled
+              label="เดือน"
+              required
+            ></v-select>
           </v-flex>
         </v-layout>
         <v-layout justify-space-between>
@@ -47,29 +53,29 @@
 
         <v-layout align-center justify-space-between>
           <v-flex>
-            <v-checkbox hide-details disabled class="shrink mr-2" label="กรณีเปลี่ยนแปลงรายได้"></v-checkbox>
+            <v-checkbox v-model="invoice.income" hide-details disabled class="shrink mr-2" label="กรณีเปลี่ยนแปลงรายได้"></v-checkbox>
           </v-flex>
 
           <v-flex>
-            <v-checkbox hide-details disabled class="shrink mr-2" label="กรณีไม่เปลี่ยนแปลงรายได้"></v-checkbox>
+            <v-checkbox v-model="invoice.notIncome" hide-details disabled class="shrink mr-2" label="กรณีไม่เปลี่ยนแปลงรายได้"></v-checkbox>
           </v-flex>
 
           <v-flex>
             <v-layout align-center>
-              <v-checkbox disabled hide-details class="shrink mr-2" label></v-checkbox>
-              <v-text-field disabled label="อื่นๆ"></v-text-field>
+              <v-checkbox v-model="invoice.otherIncome" disabled hide-details class="shrink mr-2" label></v-checkbox>
+              <v-text-field v-model="invoice.invoiceOtherDescription" disabled label="อื่นๆ"></v-text-field>
             </v-layout>
           </v-flex>
         </v-layout>
 
         <v-container>
           <v-layout align-center>
-            <v-checkbox disabled hide-details class="shrink mr-2" label></v-checkbox>
-            <v-text-field disabled label="ลดหนี้เต็มจำนวน จำนวน(บาท) (ไม่รวม VAT)"></v-text-field>
+            <v-checkbox v-model="invoice.invoiceFull" disabled hide-details class="shrink mr-2" label></v-checkbox>
+            <v-text-field v-model="invoice.invoiceFullAmount" disabled label="ลดหนี้เต็มจำนวน จำนวน(บาท) (ไม่รวม VAT)"></v-text-field>
           </v-layout>
           <v-layout align-center>
-            <v-checkbox disabled hide-details class="shrink mr-2"></v-checkbox>
-            <v-text-field disabled label="ลดหนี้บางส่วน จำนวน(บาท) (ไม่รวม VAT)"></v-text-field>
+            <v-checkbox v-model="invoice.invoicePartial" disabled hide-details class="shrink mr-2"></v-checkbox>
+            <v-text-field v-model="invoice.invoicePartialAmount" disabled label="ลดหนี้บางส่วน จำนวน(บาท) (ไม่รวม VAT)"></v-text-field>
           </v-layout>
         </v-container>
 
@@ -77,6 +83,7 @@
           name="input-7-1"
           label="สาเหตุการลดหนี้"
           disabled
+          v-model="invoice.invoiceDescription"
           value="The Woodman set to work at once, and so sharp was his axe that the tree was soon chopped nearly through."
           hint="บอกเหตุผลที่ต้องการ"
         ></v-textarea>
@@ -92,10 +99,8 @@ import { mapState } from "vuex";
 export default {
   data() {
     return {
-      a: 2556,
       itemsYear: [],
       itemsMonth: [],
-      select: ""
     };
   },
   computed: {
@@ -126,9 +131,8 @@ export default {
       this.select = year;
       for (let index = -9; index < 10; index++) {
         let nYear = year + index;
-        this.itemsYear.push(nYear);
+        this.itemsYear.push(`${nYear}`);
       }
-      console.log(this.itemsYear);
     }
   }
 };

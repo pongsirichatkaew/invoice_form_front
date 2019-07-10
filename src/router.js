@@ -5,8 +5,9 @@ import Login from "./views/Login.vue";
 import Dashboard from "./views/Dashboard.vue";
 import DashboardAdmin from "./views/DashboardAdmin.vue";
 import FormApproved from "./components/FormApprove.vue";
-import ManageUser from "./components/ManageUser.vue"
+import ManageUser from "./components/ManageUser.vue";
 Vue.use(Router);
+import { Encode, Decode } from "./services/";
 
 export default new Router({
   mode: "history",
@@ -15,12 +16,38 @@ export default new Router({
     {
       path: "/",
       name: "dashboard",
-      component: Dashboard
+      component: Dashboard,
+      beforeEnter: (to, from, next) => {
+        if (window.$cookies.get("user")) {
+          var obj = JSON.parse(Decode.decode(window.$cookies.get("user")));
+          console.log("role", obj.role);
+          if (obj.role === 1) {
+            next();
+          } else if (obj.role === 2 || obj.role === 3) {
+            next("/admin");
+          }
+        } else {
+          next("/login");
+        }
+      }
     },
     {
       path: "/admin",
       name: "admin",
       component: DashboardAdmin,
+      beforeEnter: (to, from, next) => {
+        if (window.$cookies.get("user")) {
+          var obj = JSON.parse(Decode.decode(window.$cookies.get("user")));
+          console.log("jsonObj", obj);
+          if (obj.role === 1) {
+            next("/");
+          } else if (obj.role === 2 || obj.role === 3) {
+            next();
+          }
+        } else {
+          next("/login");
+        }
+      },
       children: [
         {
           path: "",
@@ -33,15 +60,6 @@ export default new Router({
           component: ManageUser
         }
       ]
-    },
-    {
-      path: "/about",
-      name: "about",
-      // route level code-splitting
-      // this generates a separate chunk (about.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () =>
-        import(/* webpackChunkName: "about" */ "./views/About.vue")
     },
     {
       path: "/login",

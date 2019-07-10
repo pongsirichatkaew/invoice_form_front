@@ -13,8 +13,11 @@
                   label="Employee ID*"
                   required
                   :rules="addUserRules"
-                  v-model="employeeId"
+                  v-model="userIdAdd"
                 ></v-text-field>
+              </v-flex>
+              <v-flex xs12 sm6 d-flex>
+                <v-select v-model="selectRole" :items="items" label="Standard"></v-select>
               </v-flex>
             </v-layout>
           </v-container>
@@ -23,12 +26,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" flat @click="dialog = false">Close</v-btn>
-          <v-btn
-            color="blue darken-1"
-            flat
-            @click="getUserFromDevops"
-            :disabled="checkEmployeeId"
-          >Save</v-btn>
+          <v-btn color="blue darken-1" flat @click="insertUser" :disabled="checkEmployeeId">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -54,7 +52,9 @@
           <td>{{ props.item.engname }}</td>
           <td>{{ props.item.email }}</td>
           <td>{{ props.item.phonenumber }}</td>
-          <td>{{ props.item.positionname }}</td>
+          <td>{{ props.item.position }}</td>
+          <td>{{ props.item.role }}</td>
+
           <td class="justify-center layout px-0">
             <v-icon small @click="deleteUser(props.item.employee_id)">delete</v-icon>
           </td>
@@ -69,14 +69,16 @@
 </template>
 
 <script>
-import swal from "sweetalert";
+import Swal from "sweetalert2";
+import { Encode, Decode } from "../services/";
 
 export default {
   data() {
     return {
       dialog: false,
       editDialog: false,
-      employeeId: "",
+      userId: "",
+      userIdAdd: "",
       addUserRules: [
         v => !!v || "Employee Id is required",
         v =>
@@ -91,115 +93,139 @@ export default {
       users: [],
       headers: [
         {
-          text: "Employee ID",
+          text: "รหัสพนักงาน",
           align: "left",
           value: "code"
         },
-        { text: "Name TH", value: "thainame" },
-        { text: "Name EN", value: "engname" },
-        { text: "Email", value: "email" },
-        { text: "Phone Number", value: "phonenumber" },
-        { text: "Position", value: "positionname" },
+        { text: "ชื่อภาษาไทย", value: "thainame" },
+        { text: "ชื่อภาษาอังกฤษ", value: "engname" },
+        { text: "อีเมลล์", value: "email" },
+        { text: "เบอร์โทรศัพท์", value: "phonenumber" },
+        { text: "ตำแหน่ง", value: "position" },
+        { text: "หน้าที่", value: "role" },
+
         { text: "Action", sortable: false, align: "middle" }
       ],
+      items: [],
+      selectRole: ""
     };
   },
   methods: {
     isNormalInteger(str) {
       return /^\+?(0|[1-9]\d*)$/.test(str);
     },
-    getAllUsers() {
-      // this.axios
-      //   .get(process.env.VUE_APP_API + "/getAllUsers")
-      //   .then(res => {
-      //     console.log(res);
-      //     this.users = res.data;
-      //   })
-      //   .catch(error => {
-      //     if (error.response) {
-      //       // The request was made and the server responded with a status code
-      //       // that falls out of the range of 2xx
-      //       console.log(error.response.data);
-      //       this.colorSnackbar = "red";
-      //       this.text = error.response.data.result;
-      //       this.snackbar = true;
-      //       console.log(error.response.status);
-      //       console.log(error.response.headers);
-      //     } else if (error.request) {
-      //       // The request was made but no response was received
-      //       // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-      //       // http.ClientRequest in node.js
-      //       console.log(error.request);
-      //     } else {
-      //       // Something happened in setting up the request that triggered an Error
-      //       console.log("Error", error.message);
-      //     }
-      //     console.log(error.config);
-      //   });
-    },
-    async getUserFromDevops() {
+    async getAllUsers() {
       try {
-        let result = await this.axios.get(
-          process.env.VUE_APP_API_INET + "/employee/" + this.employeeId,
+        this.users = [];
+        let result = await this.axios.post(
+          process.env.VUE_APP_API + `/show_admin`,
           {
-            headers: { Authorization: `f49949b6-4a03-41c6-9e10-15aca0c59114` }
+            user_id: this.userId
           }
         );
         console.log(result);
-        let employee = result.data.employee_detail[0];
-        this.users.push(employee)
-        this.dialog = false;
+        result.data.msg.forEach(user => {
+          console.log(user);
+          let roleText = "";
+          if (user.role === 2) {
+            roleText = "ผู้จัดการข้อมูล";
+          } else if (user.role === 3) {
+            roleText = "ผู้ดูแลระบบ";
+          }
+          let u = {
+            code: user.code,
+            thainame: `${user.thainame} ${user.thlastname}`,
+            engname: `${user.engname} ${user.englastname}`,
+            email: `${user.email}`,
+            phonenumber: `${user.phonenumber}`,
+            position: `${user.positionname}`,
+            role: `${roleText}`
+          };
+          this.users.push(u);
+        });
       } catch (error) {
-        console.log(error.response);
-        this.colorSnackbar = "red";
-        this.textSnackbar =
-          error.response.data.message || error.response.data.result;
-        this.snackbar = true;
+        if (error.response) {
+          console.log(error.response.data);
+          this.colorSnackbar = "red";
+          this.text = error.response.data.result;
+          this.snackbar = true;
+          console.log(error.response.status);
+          console.log(error.response.headers);
+        } else if (error.request) {
+          console.log(error.request);
+        } else {
+          console.log("Error", error.message);
+        }
+        console.log(error.config);
       }
     },
-    deleteUser(employeeId) {
-      // swal({
-      //   title: "Are you sure?",
-      //   text: "Will you really want to delete user",
-      //   icon: "warning",
-      //   buttons: true,
-      //   dangerMode: true
-      // }).then(async willDelete => {
-      //   if (willDelete) {
-      //     try {
-      //       let result = await this.axios.delete(
-      //         process.env.VUE_APP_API + "/deleteUser/" + employeeId
-      //       );
-      //       swal("Your user has been deleted", {
-      //         icon: "success"
-      //       });
-      //       this.getAllUsers();
-      //       console.log(result);
-      //     } catch (error) {
-      //       console.log(error.response);
-      //       this.colorSnackbar = "red";
-      //       this.textSnackbar =
-      //         error.response.data.message || error.response.data.result;
-      //       this.snackbar = true;
-      //     }
-      //   }
-      // });
+    async insertUser() {
+      try {
+        let role = 2;
+        if (this.selectRole === "ผู้จัดการข้อมูล") {
+          role = 2;
+        } else if (this.selectRole === "ผู้ดูแลระบบ") {
+          role = 3;
+        }
+        let result = await this.axios.post(
+          process.env.VUE_APP_API + `/add_admin`,
+          {
+            user_id: this.userId,
+            user_id_add: this.userIdAdd,
+            role: role
+          }
+        );
+
+        Swal.fire({
+          type: "success",
+          title: "เพิ่มผู้จัดการข้อมูลเรียบร้อย",
+          showConfirmButton: false,
+          timer: 1500
+        });
+        console.log(result);
+        this.dialog = false;
+        this.getAllUsers();
+      } catch (error) {
+        if (error.response) {
+          console.log(error.response.data.msg);
+          this.colorSnackbar = "red";
+          this.text = error.response.data.msg;
+          this.snackbar = true;
+          console.log(error.response.status);
+          console.log(error.response.headers);
+        } else if (error.request) {
+          console.log(error.request);
+        } else {
+          console.log("Error", error.message);
+        }
+        console.log(error.config);
+      }
     }
   },
   computed: {
     checkEmployeeId() {
       console.log("checkEmployeeId");
-      if (this.isNormalInteger(this.employeeId)) {
+      if (this.isNormalInteger(this.userIdAdd)) {
         return false;
       }
       return true;
     }
   },
   created() {
+    var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
+    console.log("jsonObj", obj);
+    this.userId = obj.userid;
+    let role = obj.role;
+    if (role === 2) {
+      this.items.push("ผู้จัดการข้อมูล");
+    } else if (role === 3) {
+      this.items.push("ผู้จัดการข้อมูล");
+      this.items.push("ผู้ดูแลระบบ");
+    }
+    this.getAllUsers();
   },
   watch: {
     search(value) {
-      console.log(value);
       if (value !== "") {
         this.isSearch = true;
       } else {

@@ -31,7 +31,7 @@
                 :key="index"
                 avatar
                 class="v-list-item"
-                @click
+                @click="itemM.method"
               >
                 <v-list-tile-action>
                   <v-icon color="white">{{itemM.icon}}</v-icon>
@@ -57,54 +57,81 @@
 
 <script>
 import FormTable from "../components/FormTable";
+import Swal from "sweetalert2";
+import { Encode, Decode } from "../services/";
+
 export default {
   data() {
     return {
       drawer: true,
-      itemsPerson: [
-        {
-          icon: "mdi-account-card-details",
-          title: "62107",
-          subtitle: "Code"
-        },
-        {
-          icon: "phone",
-          title: "061 412 9476",
-          subtitle: "Work"
-        },
-        {
-          icon: "mdi-email",
-          subicon: "chat",
-          title: "pongsiri.ch@inet.co.th",
-          subtitle: "Email"
-        },
-        {
-          icon: "mdi-map-marker",
-          title: "ฝ่ายทรัพยากรบุคคล",
-          subtitle: "Department"
-        }
-      ],
+      itemsPerson: [],
       itemsMenu: [
         {
           to: "/admin/",
           icon: "mdi-home",
-          title: "Home"
+          title: "Home",
+          method: ""
         },
         {
           to: "/admin/manage",
           icon: "mdi-account-edit",
-          title: "Manage user"
+          title: "Manage user",
+          method: ""
         },
         {
           to: "/login",
           icon: "mdi-logout",
-          title: "Logout"
+          title: "Logout",
+          method: this.logout
         }
       ]
     };
   },
   components: {
     formtable: FormTable
+  },
+  methods: {
+    logout() {
+      this.$cookies.remove("user");
+      this.$router.push("/login");
+    }
+  },
+  created() {
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000
+    });
+
+    Toast.fire({
+      type: "success",
+      title: "Signed in successfully"
+    });
+
+    var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
+    console.log("jsonObjDashboard", obj);
+    this.userId = obj.userid;
+    this.name = `${obj.title} ${obj.name} ${obj.lastname}`;
+
+    this.itemsPerson = [
+      {
+        icon: "mdi-account-card-details",
+        title: `${obj.userid}`,
+        subtitle: "Code"
+      },
+      {
+        icon: "mdi-email",
+        subicon: "chat",
+        title: `${obj.email}`,
+        subtitle: "Email"
+      },
+      {
+        icon: "mdi-map-marker",
+        title: `${obj.department}`,
+        subtitle: "Department"
+      }
+    ];
   }
 };
 </script>

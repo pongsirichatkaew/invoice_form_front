@@ -6,6 +6,8 @@ import store from "./store";
 import "./registerServiceWorker";
 import Axios from "axios";
 import VueAxios from "vue-axios";
+Vue.use(require('vue-cookies'))
+
 Vue.config.productionTip = false;
 Vue.use(VueAxios, Axios);
 

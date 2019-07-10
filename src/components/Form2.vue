@@ -5,6 +5,7 @@
         <v-text-field
           v-model="invoice.service"
           :disabled="disabled"
+          outline
           label="บริการที่ใช้งาน"
           :rules="serviceRules"
         ></v-text-field>
@@ -94,7 +95,11 @@
                 class="shrink mr-2"
                 label
               ></v-checkbox>
-              <v-text-field :disabled="!otherIncome" label="อื่นๆ"></v-text-field>
+              <v-text-field
+                :disabled="!otherIncome"
+                label="อื่นๆ"
+                v-model="invoice.invoiceOtherDescription"
+              ></v-text-field>
             </v-layout>
           </v-flex>
         </v-layout>
@@ -108,16 +113,24 @@
               class="shrink mr-2"
               label
             ></v-checkbox>
-            <v-text-field v-model="invoice.invoiceFullAmount" :disabled="!income||disabled" label="ลดหนี้เต็มจำนวน จำนวน(บาท) (ไม่รวม VAT)"></v-text-field>
+            <v-text-field
+              v-model="invoice.invoiceFullAmount"
+              :disabled="!income||disabled"
+              label="ลดหนี้เต็มจำนวน จำนวน(บาท) (ไม่รวม VAT)"
+            ></v-text-field>
           </v-layout>
           <v-layout align-center>
             <v-checkbox
-              :disabled="!invoice.income||disabled"
+              :disabled="!invoice.income||disabled||invoicePartial"
               v-model="invoice.invoicePartial"
               hide-details
               class="shrink mr-2"
             ></v-checkbox>
-            <v-text-field v-model="invoice.invoicePartialAmount" :disabled="!income||disabled" label="ลดหนี้บางส่วน จำนวน(บาท) (ไม่รวม VAT)"></v-text-field>
+            <v-text-field
+              v-model="invoice.invoicePartialAmount"
+              :disabled="!income||disabled||invoiceFull"
+              label="ลดหนี้บางส่วน จำนวน(บาท) (ไม่รวม VAT)"
+            ></v-text-field>
           </v-layout>
         </v-container>
 
@@ -126,7 +139,6 @@
           label="สาเหตุการลดหนี้"
           v-model="invoice.invoiceDescription"
           :disabled="disabled"
-          value="The Woodman set to work at once, and so sharp was his axe that the tree was soon chopped nearly through."
           hint="บอกเหตุผลที่ต้องการ"
         ></v-textarea>
         <v-btn
@@ -153,8 +165,6 @@ export default {
       disabledBtn: false,
       itemsYear: [],
       itemsMonth: [],
-      invoiceFull: true,
-      invoicePartial: false,
       serviceRules: [v => !!v || "Service is required"]
     };
   },
@@ -177,7 +187,7 @@ export default {
         this.$store.dispatch("updateIncome", value);
       }
     },
-    notIncome:{
+    notIncome: {
       get() {
         return this.$store.getters.notIncome;
       },
@@ -185,7 +195,7 @@ export default {
         this.$store.dispatch("updateNotIncome", value);
       }
     },
-    otherIncome:{
+    otherIncome: {
       get() {
         return this.$store.getters.otherIncome;
       },
@@ -193,25 +203,38 @@ export default {
         this.$store.dispatch("updateOtherIncome", value);
       }
     },
+    invoiceFull: {
+      get() {
+        return this.$store.getters.invoiceFull;
+      },
+      set(value) {
+        this.$store.dispatch("updatInvoiceFull", value);
+      }
+    },
+    invoicePartial: {
+      get() {
+        return this.$store.getters.invoicePartial;
+      },
+      set(value) {
+        this.$store.dispatch("updatInvoicePartial", value);
+      }
+    }
   },
   watch: {
     e1(value) {
       if (value === 3) {
         this.disabled = true;
-        console.log("e1", value);
       } else {
         this.disabled = false;
       }
     },
     valid(value) {
       if (value) {
-        console.log(value);
         this.disabledBtn = false;
       }
     },
     income(value) {
       if (value) {
-        console.log("income", value);
         this.income = true;
         this.notIncome = false;
         this.otherIncome = false;
@@ -235,12 +258,14 @@ export default {
       if (value) {
         this.invoiceFull = true;
         this.invoicePartial = false;
+        this.$store.commit("updatInvoicePartialAmount", "");
       }
     },
     invoicePartial(value) {
       if (value) {
         this.invoiceFull = false;
         this.invoicePartial = true;
+        this.$store.commit("updatInvoiceFullAmount", "");
       }
     },
     dialog(value) {
@@ -270,12 +295,11 @@ export default {
       this.select = year;
       for (let index = -10; index < 10; index++) {
         let nYear = year + index;
-        this.itemsYear.push(nYear);
+        this.itemsYear.push(`${nYear}`);
       }
     },
     checkForm2Valid() {
       if (this.$refs.form2.validate()) {
-        console.log("invoice2", this.invoice);
         this.e1 = 3;
       } else {
         this.disabledBtn = true;

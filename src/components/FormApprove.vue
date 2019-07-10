@@ -2,10 +2,9 @@
   <v-app>
     <v-card-text>
       <v-toolbar flat color="white">
-        <v-toolbar-title>FormApproved</v-toolbar-title>
+        <v-toolbar-title>ตารางอนุมัติการแจ้งหนี้</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-text-field v-model="search" append-icon="search" label="Search" single-line hide-details></v-text-field>
-        <v-btn outline class="buttonInsert" @click="getDialog">Insert</v-btn>
       </v-toolbar>
       <v-data-table :headers="headers" :items="items" :search="search" class="elevation-1">
         <template v-slot:items="props">
@@ -18,56 +17,12 @@
             <v-icon small @click="openInfoDialog(props.item)">mdi-file-document</v-icon>
           </td>
           <td class="justify-center layout px-0">
-            <v-icon small class="mr-2" @click="getUpdateDialog(props.item)">edit</v-icon>
-            <v-icon small @click>delete</v-icon>
+            <v-icon small class="mr-2" @click>mdi-check-outline</v-icon>
+            <v-icon small @click>mdi-close-outline</v-icon>
           </td>
         </template>
       </v-data-table>
     </v-card-text>
-
-    <v-dialog
-      v-model="dialog"
-      fullscreen
-      hide-overlay
-      transition="dialog-bottom-transition"
-      persistent
-    >
-      <v-card>
-        <v-stepper v-model="e1">
-          <v-stepper-header>
-            <v-stepper-step :complete="e1 > 1" step="1">Name of step 1</v-stepper-step>
-
-            <v-divider></v-divider>
-
-            <v-stepper-step :complete="e1 > 2" step="2">Name of step 2</v-stepper-step>
-
-            <v-divider></v-divider>
-
-            <v-stepper-step step="3">Name of step 3</v-stepper-step>
-            <v-btn icon dark @click="closeDialog">
-              <v-icon>close</v-icon>
-            </v-btn>
-          </v-stepper-header>
-
-          <v-stepper-items>
-            <v-stepper-content step="1">
-              <firstForm></firstForm>
-            </v-stepper-content>
-
-            <v-stepper-content step="2">
-              <secondForm></secondForm>
-            </v-stepper-content>
-
-            <v-stepper-content step="3">
-              <firstForm></firstForm>
-              <secondForm></secondForm>
-              <v-btn color="primary" @click="addinvoiceDoc">Continue</v-btn>
-              <v-btn flat @click="e1 =2 ">Cancel</v-btn>
-            </v-stepper-content>
-          </v-stepper-items>
-        </v-stepper>
-      </v-card>
-    </v-dialog>
 
     <v-dialog
       v-model="infoDialog"
@@ -79,58 +34,72 @@
       <v-card>
         <v-toolbar>
           <v-spacer></v-spacer>
-          <v-toolbar-items class="hidden-sm-and-down">
-            <v-btn icon large @click="closeInfoDialog">
-              <v-icon dark>close</v-icon>
-            </v-btn>
-          </v-toolbar-items>
+          <v-btn icon @click="closeInfoDialog">
+            <v-icon dark>close</v-icon>
+          </v-btn>
+          <v-toolbar-items class="hidden-sm-and-down"></v-toolbar-items>
         </v-toolbar>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              class="btn-approved"
+              color="success"
+              large
+              dark
+              v-on="on"
+              @click="openApproveDialog(true)"
+            >
+              <v-icon left>mdi-check</v-icon>อนุมัติ
+            </v-btn>
+          </template>
+          <span>อนุมัติ</span>
+        </v-tooltip>
+
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              class="btn-reject"
+              color="error"
+              large
+              dark
+              v-on="on"
+              @click="openApproveDialog(false)"
+            >
+              <v-icon left>mdi-close</v-icon>ไม่อนุมัติ
+            </v-btn>
+          </template>
+          <span>ไม่อนุมัติ</span>
+        </v-tooltip>
+
         <infoForm1></infoForm1>
         <infoForm2></infoForm2>
-      </v-card>
-    </v-dialog>
-
-    <v-dialog
-      v-model="updateDialog"
-      fullscreen
-      hide-overlay
-      transition="dialog-bottom-transition"
-      persistent
-    >
-      <v-card>
-        <v-stepper v-model="e1">
-          <v-stepper-header>
-            <v-stepper-step :complete="e1 > 1" step="1">Name of step 1</v-stepper-step>
-
-            <v-divider></v-divider>
-
-            <v-stepper-step :complete="e1 > 2" step="2">Name of step 2</v-stepper-step>
-
-            <v-divider></v-divider>
-
-            <v-stepper-step step="3">Name of step 3</v-stepper-step>
-            <v-btn icon dark @click="closeUpdateDialog">
-              <v-icon>close</v-icon>
-            </v-btn>
-          </v-stepper-header>
-
-          <v-stepper-items>
-            <v-stepper-content step="1">
-              <firstForm></firstForm>
-            </v-stepper-content>
-
-            <v-stepper-content step="2">
-              <secondForm></secondForm>
-            </v-stepper-content>
-
-            <v-stepper-content step="3">
-              <firstForm></firstForm>
-              <secondForm></secondForm>
-              <v-btn color="primary" @click>Continue</v-btn>
-              <v-btn flat @click="e1 =2 ">Cancel</v-btn>
-            </v-stepper-content>
-          </v-stepper-items>
-        </v-stepper>
+        <v-dialog v-model="approveDialog" max-width="600px">
+          <v-card>
+            <v-card-title>
+              <span class="headline">{{headlinneApprove}}</span>
+            </v-card-title>
+            <v-card-text>
+              <v-container grid-list-md>
+                <v-layout wrap>
+                  <v-flex>
+                    <v-textarea
+                      v-model="approveComment"
+                      name="input-7-4"
+                      label="ความคิดเห็นเพิ่มเติม"
+                    ></v-textarea>
+                  </v-flex>
+                </v-layout>
+              </v-container>
+              <small>*indicates required field</small>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" flat @click="closeApproveDialog">ปิด</v-btn>
+              <v-btn color="blue darken-1" flat @click="saveApproveDialog">{{btnApprove}}</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+        <v-card-text style="height: 30px; position: relative"></v-card-text>
       </v-card>
     </v-dialog>
   </v-app>
@@ -144,9 +113,11 @@ import Form1Info from "./Form1Info";
 import Form2Info from "./Form2Info";
 import InfoForm from "./InfoForm";
 import { mapState } from "vuex";
+import { Encode, Decode } from "../services/";
 
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
+import Swal from "sweetalert2";
 
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
@@ -184,32 +155,21 @@ export default {
         { text: "สถานะ", value: "status" },
         { text: "เอกสาร", value: "", sortable: false, align: "center" },
 
-        { text: "Actions", value: "name", sortable: false, align: "center" }
+        { text: "อนุมัติ", value: "name", sortable: false, align: "center" }
       ],
-      items: [
-        {
-          id: 1,
-          invoiceNumber: "123",
-          customerId: "123",
-          customerName: "444",
-          invoiceSlip: "5555",
-          soNumber: "666",
-          invoiceAmount: "7777",
-          service: "is a Sample",
-          sinceServiceYear: 2555,
-          sinceServiceMonth: "มกราคม",
-          toServiceYear: 2560,
-          toServiceMonth: "กุมภาพันธ์",
-          last_created: "1/1/2022",
-          status: ":)"
-        }
-      ],
+      items: [],
       search: "",
       notifications: false,
       sound: true,
       widgets: false,
       enabled: true,
-      infoDialog: false
+      infoDialog: false,
+      userId: "",
+      approveDialog: false,
+      isApprove: false,
+      approveComment: "",
+      headlinneApprove: "",
+      btnApprove: ""
     };
   },
   components: {
@@ -237,40 +197,67 @@ export default {
       this.$store.commit("updateUpdatedialog", true);
       this.$store.commit("updateInvoiceInfo", item);
     },
-    addinvoiceDoc() {
-      console.log(this.$store.state.invoice);
-      let length = this.items.length + 1;
-      let item = {
-        id: length,
-        invoiceNumber: this.invoice.invoiceNumber,
-        customerId: this.invoice.customerId,
-        customerName: this.invoice.customerName,
-        invoiceSlip: this.invoice.invoiceSlip,
-        soNumber: this.invoice.soNumber,
-        invoiceAmount: this.invoice.invoiceAmount,
-
-        service: this.invoice.service,
-        sinceServiceYear: this.invoice.sinceServiceYear,
-        sinceServiceMonth: this.invoice.sinceServiceMonth,
-        toServiceYear: this.invoice.toServiceYear,
-        toServiceMonth: this.invoice.toServiceMonth,
-        last_created: "1/1/2022",
-        status: ":)"
-      };
-      console.log("itemAdded", item);
-      this.items.push(item);
-
-      //clear
-      this.$store.commit("clearFormData");
-      this.$store.commit("updateDialog", false);
-    },
     openInfoDialog(item) {
       this.infoDialog = true;
       this.$store.commit("updateInvoiceInfo", item);
       console.log("infoClicked", this.invoice);
     },
-    updateInvoice(item) {
-      // this.$store.commit("updateUpdatedialog", true);
+    openApproveDialog(value) {
+      this.approveDialog = true;
+      this.isApprove = value;
+      if (this.isApprove) {
+        this.headlinneApprove = "อนุมัติใบแจ้งหนี้";
+        this.btnApprove = "อนุมัติ";
+      } else {
+        this.headlinneApprove = "ไม่อนุมัติใบแจ้งหนี้";
+        this.btnApprove = "ไม่อนุมัติ";
+      }
+    },
+    closeApproveDialog() {
+      this.approveDialog = false;
+      this.approveComment = "";
+    },
+    async saveApproveDialog() {
+      try {
+        let status = "ไม่อนุมัติ";
+        if (this.isApprove) {
+          status = "อนุมัติ";
+        }
+        console.log("invoice", this.invoice);
+        let result = await this.axios.post(
+          process.env.VUE_APP_API + `/approve`,
+          {
+            id_user: this.userId,
+            id_from: this.invoice.invoiceNumber,
+            status: status,
+            edit_at: new Date(),
+            comment: this.approveComment
+          }
+        );
+        Swal.fire({
+          type: "success",
+          title: "อนุมัติสำเร็จเรียบร้อย",
+          showConfirmButton: false,
+          timer: 1500
+        });
+        console.log(result);
+        this.closeInfoDialog();
+        this.getAllInvoiceForm();
+      } catch (error) {
+        if (error.response) {
+          console.log(error.response.data);
+          this.colorSnackbar = "red";
+          this.text = error.response.data.result;
+          this.snackbar = true;
+          console.log(error.response.status);
+          console.log(error.response.headers);
+        } else if (error.request) {
+          console.log(error.request);
+        } else {
+          console.log("Error", error.message);
+        }
+        console.log(error.config);
+      }
     },
     closeDialog() {
       this.$store.commit("updateDialog", false);
@@ -283,6 +270,59 @@ export default {
     closeUpdateDialog() {
       this.$store.commit("updateUpdatedialog", false);
       this.$store.commit("clearFormData");
+    },
+    async getAllInvoiceForm() {
+      try {
+        this.items = [];
+        let result = await this.axios.post(process.env.VUE_APP_API + `/menu`, {
+          user_id: this.userId
+        });
+        console.log(result);
+        let index = 1;
+        result.data.forEach(form => {
+          console.log("form", form);
+          let f = {
+            id: index++,
+            invoiceNumber: form.id_from,
+            customerId: form.id_customer,
+            customerName: form.customer_name,
+            invoiceSlip: form.invoice_no,
+            soNumber: form.ref_so,
+            invoiceAmount: form.amount_no_vat,
+            service: form.service,
+            sinceServiceYear: form.from_year,
+            sinceServiceMonth: form.from_month,
+            toServiceYear: form.to_year,
+            toServiceMonth: form.to_month,
+            income: form.change_income,
+            invoiceFull: form.full,
+            invoiceFullAmount: form.full_text,
+            invoicePartial: form.some,
+            invoicePartialAmount: form.some_text,
+            notIncome: form.not_change_income,
+            otherIncome: form.other,
+            invoiceOtherDescription: form.other_text,
+            invoiceDescription: form.debt_text,
+            last_created: form.create_at,
+            status: form.status
+          };
+          this.items.push(f);
+        });
+      } catch (error) {
+        if (error.response) {
+          console.log(error.response.data);
+          this.colorSnackbar = "red";
+          this.text = error.response.data.result;
+          this.snackbar = true;
+          console.log(error.response.status);
+          console.log(error.response.headers);
+        } else if (error.request) {
+          console.log(error.request);
+        } else {
+          console.log("Error", error.message);
+        }
+        console.log(error.config);
+      }
     },
     savePdf() {
       let exId = 62107;
@@ -374,13 +414,17 @@ export default {
       // });
     }
   },
-
-  watch: {}
+  created() {
+    var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
+    console.log("jsonObj", obj);
+    this.userId = obj.userid;
+    this.getAllInvoiceForm();
+  }
 };
 </script>
 
 <style scoped>
-.v-btn.v-btn--outline {
+>>> .v-btn.v-btn--outline {
   box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.15);
 }
 .background {
@@ -391,5 +435,33 @@ export default {
 }
 .v-stepper__header {
   background-image: -webkit-linear-gradient(180deg, #96c93d, #00b09b);
+}
+.my-toolbar {
+  position: fixed;
+  top: 0;
+  border: 0;
+  z-index: 999;
+  display: block;
+}
+.btn-approved {
+  position: fixed;
+  top: 10%;
+  right: 0;
+  border: 0;
+  z-index: 999;
+  display: block;
+  width: 150px;
+}
+.btn-reject {
+  position: fixed;
+  top: 15%;
+  right: 0;
+  border: 0;
+  z-index: 999;
+  display: block;
+  width: 150px;
+}
+>>> .v-btn__content {
+  justify-content: left;
 }
 </style>

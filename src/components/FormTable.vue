@@ -19,7 +19,6 @@
           </td>
           <td class="justify-center layout px-0">
             <v-icon small class="mr-2" @click="getUpdateDialog(props.item)">edit</v-icon>
-            <v-icon small @click>delete</v-icon>
           </td>
         </template>
       </v-data-table>
@@ -35,15 +34,21 @@
       <v-card>
         <v-stepper v-model="e1">
           <v-stepper-header>
-            <v-stepper-step :complete="e1 > 1" step="1">Name of step 1</v-stepper-step>
+            <v-stepper-step :complete="e1 > 1" step="1">
+              <span class="white--text">Name of step1</span>
+            </v-stepper-step>
 
             <v-divider></v-divider>
 
-            <v-stepper-step :complete="e1 > 2" step="2">Name of step 2</v-stepper-step>
+            <v-stepper-step :complete="e1 > 2" step="2">
+              <span class="white--text">Name of step1</span>
+            </v-stepper-step>
 
             <v-divider></v-divider>
 
-            <v-stepper-step step="3">Name of step 3</v-stepper-step>
+            <v-stepper-step step="3">
+              <span class="white--text">Name of step1</span>
+            </v-stepper-step>
             <v-btn icon dark @click="closeDialog">
               <v-icon>close</v-icon>
             </v-btn>
@@ -61,7 +66,7 @@
             <v-stepper-content step="3">
               <firstForm></firstForm>
               <secondForm></secondForm>
-              <v-btn color="primary" @click="savePdf">Continue</v-btn>
+              <v-btn color="primary" @click="addinvoiceDoc">Continue</v-btn>
               <v-btn flat @click="e1 =2 ">Cancel</v-btn>
             </v-stepper-content>
           </v-stepper-items>
@@ -126,7 +131,7 @@
             <v-stepper-content step="3">
               <firstForm></firstForm>
               <secondForm></secondForm>
-              <v-btn color="primary" @click>Continue</v-btn>
+              <v-btn color="primary" @click="updateInvoice">Continue</v-btn>
               <v-btn flat @click="e1 =2 ">Cancel</v-btn>
             </v-stepper-content>
           </v-stepper-items>
@@ -139,6 +144,7 @@
 <script>
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
+import pdfMake2 from "pdfmake-unicode";
 
 import Form1 from "./Form1";
 import Form2 from "./Form2";
@@ -147,6 +153,7 @@ import Form1Info from "./Form1Info";
 import Form2Info from "./Form2Info";
 import InfoForm from "./InfoForm";
 import { mapState } from "vuex";
+import { Encode, Decode } from "../services/";
 
 export default {
   data() {
@@ -167,7 +174,7 @@ export default {
         { text: "สถานะ", value: "status" },
         { text: "เอกสาร", value: "", sortable: false, align: "center" },
 
-        { text: "Actions", value: "name", sortable: false, align: "center" }
+        { text: "แก้ไขข้อมูล", value: "name", sortable: false, align: "center" }
       ],
       items: [
         {
@@ -192,7 +199,8 @@ export default {
       sound: true,
       widgets: false,
       enabled: true,
-      infoDialog: false
+      infoDialog: false,
+      userId: ""
     };
   },
   components: {
@@ -217,43 +225,178 @@ export default {
       this.$store.commit("updateDialog", true);
     },
     getUpdateDialog(item) {
+      console.log("itemupdated", item);
       this.$store.commit("updateUpdatedialog", true);
       this.$store.commit("updateInvoiceInfo", item);
     },
-    addinvoiceDoc() {
-      console.log(this.$store.state.invoice);
-      let length = this.items.length + 1;
-      let item = {
-        id: length,
-        invoiceNumber: this.invoice.invoiceNumber,
-        customerId: this.invoice.customerId,
-        customerName: this.invoice.customerName,
-        invoiceSlip: this.invoice.invoiceSlip,
-        soNumber: this.invoice.soNumber,
-        invoiceAmount: this.invoice.invoiceAmount,
+    async getAllForm() {
+      try {
+        this.items = [];
+        let result = await this.axios.post(process.env.VUE_APP_API + `/menu`, {
+          user_id: this.userId
+        });
+        console.log(result);
+        let index = 1;
+        result.data.forEach(form => {
+          console.log("form", form);
+          let f = {
+            id: index++,
+            invoiceNumber: form.id_from,
+            customerId: form.id_customer,
+            customerName: form.customer_name,
+            invoiceSlip: form.invoice_no,
+            soNumber: form.ref_so,
+            invoiceAmount: form.amount_no_vat,
+            service: form.service,
+            sinceServiceYear: form.from_year,
+            sinceServiceMonth: form.from_month,
+            toServiceYear: form.to_year,
+            toServiceMonth: form.to_month,
+            income: form.change_income,
+            invoiceFull: form.full,
+            invoiceFullAmount: form.full_text,
+            invoicePartial: form.some,
+            invoicePartialAmount: form.some_text,
+            notIncome: form.not_change_income,
+            otherIncome: form.other,
+            invoiceOtherDescription: form.other_text,
+            invoiceDescription: form.debt_text,
+            last_created: form.create_at,
+            status: form.status
+          };
+          this.items.push(f);
+        });
+      } catch (error) {
+        if (error.response) {
+          console.log(error.response.data);
+          this.colorSnackbar = "red";
+          this.text = error.response.data.result;
+          this.snackbar = true;
+          console.log(error.response.status);
+          console.log(error.response.headers);
+        } else if (error.request) {
+          console.log(error.request);
+        } else {
+          console.log("Error", error.message);
+        }
+        console.log(error.config);
+      }
+    },
+    async addinvoiceDoc() {
+      try {
+        console.log(this.invoice);
+        let result = await this.axios.post(
+          process.env.VUE_APP_API + `/create`,
+          {
+            id_user: this.userId,
+            id_from: this.invoice.invoiceNumber,
+            create_at: new Date(),
+            id_customer: this.invoice.customerId,
+            customer_name: this.invoice.customerName,
+            invoice_no: this.invoice.invoiceSlip,
+            ref_so: this.invoice.soNumber,
+            amount_no_vat: this.invoice.invoiceAmount,
 
-        service: this.invoice.service,
-        sinceServiceYear: this.invoice.sinceServiceYear,
-        sinceServiceMonth: this.invoice.sinceServiceMonth,
-        toServiceYear: this.invoice.toServiceYear,
-        toServiceMonth: this.invoice.toServiceMonth,
-        last_created: "1/1/2022",
-        status: ":)"
-      };
-      console.log("itemAdded", item);
-      this.items.push(item);
+            service: this.invoice.service,
+            from_year: this.invoice.sinceServiceYear,
+            from_month: this.invoice.sinceServiceMonth,
+            to_year: this.invoice.toServiceYear,
+            to_month: this.invoice.toServiceMonth,
 
-      //clear
-      this.$store.commit("clearFormData");
-      this.$store.commit("updateDialog", false);
+            change_income: this.invoice.income ? 1 : 0,
+            full: this.invoice.invoiceFull ? 1 : 0,
+            full_text: this.invoice.invoiceFullAmount,
+
+            some: this.invoice.invoicePartial ? 1 : 0,
+            some_text: this.invoice.invoicePartialAmount,
+
+            not_change_income: this.invoice.notIncome ? 1 : 0,
+            other: this.invoice.otherIncome ? 1 : 0,
+            other_text: this.invoice.other_text,
+
+            debt_text: this.invoice.invoiceDescription
+          }
+        );
+        console.log(result);
+        await this.savePdf();
+
+        this.getAllForm();
+        this.$store.commit("clearFormData");
+        this.$store.commit("updateDialog", false);
+      } catch (error) {
+        if (error.response) {
+          console.log(error.response.data);
+          this.colorSnackbar = "red";
+          this.text = error.response.data.result;
+          this.snackbar = true;
+          console.log(error.response.status);
+          console.log(error.response.headers);
+        } else if (error.request) {
+          console.log(error.request);
+        } else {
+          console.log("Error", error.message);
+        }
+        console.log(error.config);
+      }
     },
     openInfoDialog(item) {
       this.infoDialog = true;
       this.$store.commit("updateInvoiceInfo", item);
+      console.log(item);
       console.log("infoClicked", this.invoice);
     },
-    updateInvoice(item) {
-      // this.$store.commit("updateUpdatedialog", true);
+    async updateInvoice() {
+      try {
+        console.log(this.invoice);
+        let result = await this.axios.post(process.env.VUE_APP_API + `/edit`, {
+          id_user: this.userId,
+          id_from: this.invoice.invoiceNumber,
+          create_at: new Date(),
+          id_customer: this.invoice.customerId,
+          customer_name: this.invoice.customerName,
+          invoice_no: this.invoice.invoiceSlip,
+          ref_so: this.invoice.soNumber,
+          amount_no_vat: this.invoice.invoiceAmount,
+
+          service: this.invoice.service,
+          from_year: this.invoice.sinceServiceYear,
+          from_month: this.invoice.sinceServiceMonth,
+          to_year: this.invoice.toServiceYear,
+          to_month: this.invoice.toServiceMonth,
+
+          change_income: this.invoice.income ? 1 : 0,
+          full: this.invoice.invoiceFull ? 1 : 0,
+          full_text: this.invoice.invoiceFullAmount,
+
+          some: this.invoice.invoicePartial ? 1 : 0,
+          some_text: this.invoice.invoicePartialAmount,
+
+          not_change_income: this.invoice.notIncome ? 1 : 0,
+          other: this.invoice.otherIncome ? 1 : 0,
+          other_text: this.invoice.other_text,
+
+          debt_text: this.invoice.invoiceDescription
+        });
+        console.log(result);
+        // await this.savePdf();
+        this.getAllForm();
+        this.$store.commit("clearFormData");
+        this.$store.commit("updateUpdatedialog", false);
+      } catch (error) {
+        if (error.response) {
+          console.log(error.response.data);
+          this.colorSnackbar = "red";
+          this.text = error.response.data.result;
+          this.snackbar = true;
+          console.log(error.response.status);
+          console.log(error.response.headers);
+        } else if (error.request) {
+          console.log(error.request);
+        } else {
+          console.log("Error", error.message);
+        }
+        console.log(error.config);
+      }
     },
     closeDialog() {
       this.$store.commit("updateDialog", false);
@@ -268,11 +411,40 @@ export default {
       this.$store.commit("clearFormData");
     },
     savePdf() {
-      let exId = 62107;
+      let symbolIncome = this.invoice.income
+        ? "check_box"
+        : "check_box_outline_blank";
+      console.log("symbolIncome", symbolIncome);
+      let symbolNotIncome = this.invoice.notIncome
+        ? "check_box"
+        : "check_box_outline_blank";
+      console.log("symbolNotIncome", symbolNotIncome);
+
+      let symbolOtherIncome = this.invoice.otherIncome
+        ? "check_box"
+        : "check_box_outline_blank";
+      let symbolInvoiceFull = this.invoice.income
+        ? this.invoice.invoiceFull
+          ? "check_box"
+          : "check_box_outline_blank"
+        : "check_box_outline_blank";
+      let symbolInvoicePartial = this.invoice.income
+        ? this.invoice.invoicePartial
+          ? "check_box"
+          : "check_box_outline_blank"
+        : "check_box_outline_blank";
+
+      let invoiceFullAmount = this.invoice.invoiceFull
+        ? `${this.invoice.invoiceFullAmount}`
+        : "0";
+      let invoicePartialAmount = this.invoice.invoicePartial
+        ? `${this.invoice.invoicePartialAmount}`
+        : "0";
+
       var dd = {
         content: [
           {
-            text: "แบบฟอร์มขออนุมัติลดหนี้\n",
+            text: "แบบฟอร์มขออนุมัติลดหนี้  \n ",
             style: "header"
           },
           {
@@ -291,11 +463,11 @@ export default {
                     alignment: "justify",
                     columns: [
                       {
-                        text: `\n\nรหัสลูกค้า ..${this.invoice.invoiceNumber}...   ชื่อลูกค้า ........... \n อ้างอิง S/O เลขที่ .........................................................................`,
+                        text: `\n\nรหัสลูกค้า: ${this.invoice.customerId}   ชื่อลูกค้า: ${this.invoice.customerName}\n อ้างอิง S/O เลขที่: ${this.invoice.soNumber}`,
                         style: "headerLeft"
                       },
                       {
-                        text: `เลขที่ใบลดหนี้ ....... \n\n เลขที่ใบแจ้งหนี้/เลขที่ใบเสร็จรับเงิน.......... \n จำนวนเงินตามใบแจ้งหนี้(ไม่รวมภาษีมูลค่าเพิ่ม) ...... บาท`,
+                        text: `เลขที่ใบลดหนี้: ${this.invoice.invoiceNumber} \n\n เลขที่ใบแจ้งหนี้/เลขที่ใบเสร็จรับเงิน: ${this.invoice.invoiceSlip} \n จำนวนเงินตามใบแจ้งหนี้(ไม่รวมภาษีมูลค่าเพิ่ม): ${this.invoice.invoiceAmount} บาท`,
                         style: "headerRight"
                       }
                     ]
@@ -335,12 +507,11 @@ export default {
               body: [
                 [
                   {
-                    text: "บริการที่ใช้งาน",
+                    text: `บริการที่ใช้งาน: ${this.invoice.service}`,
                     style: "headerLeft"
                   },
                   {
-                    text:
-                      "ตั้งแต่รอบบริการ พ.ศ. เดือน \n ถึงรอบบริการ พ.ศ. เดือน ",
+                    text: `ตั้งแต่รอบบริการ พ.ศ.${this.invoice.sinceServiceYear} เดือน ${this.invoice.sinceServiceMonth} \n ถึงรอบบริการ พ.ศ.${this.invoice.toServiceYear} เดือน ${this.invoice.toServiceMonth}`,
                     style: "headerLeft"
                   }
                 ]
@@ -357,24 +528,28 @@ export default {
                     columns: [
                       {
                         text: [
-                          { text: "\uf111", style: "symbol" },
+                          { text: `${symbolIncome.trim()}`, style: "symbol1" },
                           {
                             text: [
                               {
-                                text: " กรณีเปลี่ยนแปลงรายได้ \n \t",
+                                text: "กรณีเปลี่ยนแปลงรายได้\n",
                                 style: "headerRight"
                               },
-                              { text: "\uf111", style: "symbol" },
                               {
-                                text:
-                                  " ลดหนี้เต็มจำนวน จำนวน .......... บาท (ไม่รวม VAT) \n\t",
-                                style: "headerRight"
+                                text: `${symbolInvoiceFull}`,
+                                style: "symbol1"
                               },
-                              { text: " \uf111", style: "symbol" },
                               {
-                                text:
-                                  " ลดหนี้บางส่วน จำนวน .......... บาท (ไม่รวม VAT) \n",
-                                style: "headerRight"
+                                text: `ลดหนี้เต็มจำนวนจำนวน${invoiceFullAmount}บาท(ไม่รวม VAT)\n `,
+                                style: "headerLeft"
+                              },
+                              {
+                                text: `${symbolInvoicePartial}`,
+                                style: "symbol1"
+                              },
+                              {
+                                text: `ลดหนี้บางส่วนจำนวน${invoicePartialAmount}บาท(ไม่รวม VAT)`,
+                                style: "headerLeft"
                               }
                             ]
                           }
@@ -383,8 +558,8 @@ export default {
                       {
                         text: [
                           {
-                            text: "\uf111",
-                            style: "symbol"
+                            text: `${symbolNotIncome}`,
+                            style: "symbol1"
                           },
                           {
                             text: " กรณีไม่เปลี่ยนแปลงรายได้ ",
@@ -407,17 +582,15 @@ export default {
                   {
                     text: [
                       {
-                        text: "\uf111",
-                        style: "symbol"
+                        text: `${symbolOtherIncome}`,
+                        style: "symbol1"
                       },
                       {
-                        text:
-                          "อื่นๆ น็อกคาวบอย คอลัมนิสต์ไบโอฮันนีมูน อพาร์ตเมนท์ เยอบีร่าเซี้ยวหยวนยาวี วอล์คเบอร์เกอร์แอปเปิลโฟล์ค กรีนโปรดักชั่นแซ็กมั้ย \n",
+                        text: `อื่นๆ: ${this.invoice.invoiceOtherDescription} \n`,
                         style: "headerLeft"
                       },
                       {
-                        text:
-                          "สาเหตุการลดหนี้ แมชชีนลอจิสติกส์ ไฮเทคเซ็นทรัลครัวซองต์เพียว เวณิกาเฮอร์ริเคนคอนโทรลละอ่อนเกรด บิลแฟนตาซีเทคโนแครตอาข่า โมเต็ล ไวอะกร้าผู้นำแฟร์ซีเนียร์ เอ๊าะโอเปอเรเตอร์เฟอร์นิเจอร์เซาท์ ธุหร่ำโนติส โซลาร์ไตรมาสบุญคุณนายแบบ ไอเดียเฟอร์นิเจอร์กรุ๊ปพูลฮาราคีรี เกรย์สหัสวรรษ การันตี มาม่าดีลเลอร์โฮสเตสแกรนด์บูติก แอพพริคอทซัพพลายเออร์ฮาร์ดอีสเตอร์วาทกรรม มิวสิควืดอพาร์ทเมนท์อุปการคุณ คอร์ปอเรชั่น",
+                        text: `สาเหตุการลดหนี้: ${this.invoice.invoiceDescription}`,
                         style: "headerLeft"
                       }
                     ]
@@ -443,22 +616,25 @@ export default {
                     columns: [
                       {
                         text: [
-                          { text: "\uf111", style: "symbol" },
+                          { text: "check_box_outline_blank", style: "symbol1" },
                           {
                             text: [
                               {
-                                text: "ต้นทุนบริการ \n \t",
-                                style: "headerRight"
-                              },
-                              { text: "\uf111", style: "symbol" },
-                              {
-                                text:
-                                  " มีค่าใช้จ่ายเกิดขึ้นแล้ว จำนวน .......... บาท (ไม่รวม VAT) \n\t",
+                                text: " ต้นทุนบริการ \n \t",
                                 style: "headerRight"
                               },
                               {
+                                text: "check_box_outline_blank",
+                                style: "symbol1"
+                              },
+                              {
                                 text:
-                                  " ค่าใช้จ่ายสำหรับบริการ .......... บาท (ไม่รวม VAT) \n",
+                                  "มีค่าใช้จ่ายเกิดขึ้นแล้ว จำนวน .......... บาท(ไม่รวม VAT)\n\t",
+                                style: "headerRight"
+                              },
+                              {
+                                text:
+                                  "ค่าใช้จ่ายสำหรับบริการ .......... บาท(ไม่รวม VAT)\n",
                                 style: "headerRight"
                               }
                             ]
@@ -468,11 +644,11 @@ export default {
                       {
                         text: [
                           {
-                            text: " \n \uf111 ",
-                            style: "symbol"
+                            text: "\ncheck_box_outline_blank",
+                            style: "symbol1"
                           },
                           {
-                            text: "ยังไม่มีค่าใช้จ่ายเกิดขึ้น \n",
+                            text: " ยังไม่มีค่าใช้จ่ายเกิดขึ้น \n",
                             style: "headerRight"
                           },
                           {
@@ -502,12 +678,12 @@ export default {
                   {
                     text: [
                       {
-                        text: "\uf111",
-                        style: "symbol"
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
                       },
                       {
                         text:
-                          "อื่นๆ น็อกคาวบอย คอลัมนิสต์ไบโอฮันนีมูน อพาร์ตเมนท์ เยอบีร่าเซี้ยวหยวนยาวี วอล์คเบอร์เกอร์แอปเปิลโฟล์ค กรีนโปรดักชั่นแซ็กมั้ย \n",
+                          " อื่นๆ น็อกคาวบอย คอลัมนิสต์ไบโอฮันนีมูน อพาร์ตเมนท์ เยอบีร่าเซี้ยวหยวนยาวี วอล์คเบอร์เกอร์แอปเปิลโฟล์ค กรีนโปรดักชั่นแซ็กมั้ย \n",
                         style: "headerLeft"
                       }
                     ]
@@ -577,16 +753,16 @@ export default {
                         style: "middleSubHeader"
                       },
                       {
-                        text: "\uf111",
-                        style: "symbol"
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
                       },
                       {
                         text: " อนุมัติ \n",
                         style: "headerLeft"
                       },
                       {
-                        text: "\uf111",
-                        style: "symbol"
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
                       },
                       {
                         text: " ขอข้อมูลเพิ่มเติมเรื่อง  ",
@@ -599,8 +775,8 @@ export default {
                       },
 
                       {
-                        text: "\uf111",
-                        style: "symbol"
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
                       },
                       {
                         text: " ไม่อนุมัติ เนื่องจาก ",
@@ -625,16 +801,16 @@ export default {
                         style: "middleSubHeader"
                       },
                       {
-                        text: "\uf111",
-                        style: "symbol"
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
                       },
                       {
                         text: " อนุมัติ \n",
                         style: "headerLeft"
                       },
                       {
-                        text: "\uf111",
-                        style: "symbol"
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
                       },
                       {
                         text: " ขอข้อมูลเพิ่มเติมเรื่อง  ",
@@ -647,8 +823,8 @@ export default {
                       },
 
                       {
-                        text: "\uf111",
-                        style: "symbol"
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
                       },
                       {
                         text: " ไม่อนุมัติ เนื่องจาก ",
@@ -724,7 +900,8 @@ export default {
         }
       };
 
-      dd.styles.symbol = { font: "FontAwesome", color: "#656565" };
+      dd.styles.symbol = { font: "FontAwesome", color: "red" };
+      dd.styles.symbol1 = { font: "MaterialIconsRegular" };
       pdfMake.createPdf(dd).open();
       const pdfDocGenerator = pdfMake.createPdf(dd);
       // pdfDocGenerator.getBase64(data => {
@@ -758,10 +935,24 @@ export default {
         bold: "fontawesome-webfont.ttf",
         italics: "fontawesome-webfont.ttf",
         bolditalics: "fontawesome-webfont.ttf"
+      },
+      Wingdng2: {
+        normal: "wingdng2.ttf",
+        bold: "wingdng2.ttf",
+        italics: "wingdng2.ttf",
+        bolditalics: "wingdng2.ttf"
+      },
+      MaterialIconsRegular: {
+        normal: "MaterialIcons-Regular.ttf"
       }
     };
 
     pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+    var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
+    console.log("jsonObj", obj);
+    this.userId = obj.userid;
+    this.getAllForm();
   }
 };
 </script>

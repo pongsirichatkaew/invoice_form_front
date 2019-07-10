@@ -6,7 +6,7 @@
           <v-list two-line>
             <v-list-tile avatar>
               <v-list-tile-content>
-                <v-list-tile-title>Welcome Pongsiri Chatkaew</v-list-tile-title>
+                <v-list-tile-title>{{name}}</v-list-tile-title>
               </v-list-tile-content>
             </v-list-tile>
 
@@ -25,7 +25,7 @@
               </v-list-tile-action>
             </v-list-tile>
             <v-list class="transparent">
-              <v-list-tile v-for="(itemM,index) in itemsMenu" :key="index" @click>
+              <v-list-tile v-for="(itemM,index) in itemsMenu" :key="index" @click="itemM.method">
                 <v-list-tile-action>
                   <v-icon>{{itemM.icon}}</v-icon>
                 </v-list-tile-action>
@@ -50,43 +50,69 @@
 
 <script>
 import FormTable from "../components/FormTable";
+import Swal from "sweetalert2";
+import { Encode, Decode } from "../services/";
+
 export default {
   data() {
     return {
       drawer: true,
-      itemsPerson: [
-        {
-          icon: "mdi-account-card-details",
-          title: "62107",
-          subtitle: "Code"
-        },
-        {
-          icon: "phone",
-          title: "061 412 9476",
-          subtitle: "Work"
-        },
-        {
-          icon: "mdi-email",
-          subicon: "chat",
-          title: "pongsiri.ch@inet.co.th",
-          subtitle: "Email"
-        },
-        {
-          icon: "mdi-map-marker",
-          title: "ฝ่ายทรัพยากรบุคคล",
-          subtitle: "Department"
-        }
-      ],
+      itemsPerson: [],
       itemsMenu: [
         {
           icon: "mdi-logout",
-          title: "Logout"
+          title: "Logout",
+          method: this.logout
         }
-      ]
+      ],
+      name: ""
     };
   },
   components: {
     formtable: FormTable
+  },
+  methods: {
+    logout() {
+      this.$cookies.remove("user");
+      this.$router.push("/login");
+    }
+  },
+  created() {
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000
+    });
+
+    Toast.fire({
+      type: "success",
+      title: "Signed in successfully"
+    });
+
+    var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
+    console.log("jsonObjDashboard", obj);
+    this.userId = obj.userid;
+    this.name = `${obj.title} ${obj.name} ${obj.lastname}`;
+
+    this.itemsPerson = [
+      {
+        icon: "mdi-account-card-details",
+        title: `${obj.userid}`,
+        subtitle: "Code"
+      },
+      {
+        icon: "mdi-email",
+        subicon: "chat",
+        title: `${obj.email}`,
+        subtitle: "Email"
+      },
+      {
+        icon: "mdi-map-marker",
+        title: `${obj.department}`,
+        subtitle: "Department"
+      }
+    ];
   }
 };
 </script>

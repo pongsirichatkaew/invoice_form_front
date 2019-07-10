@@ -7,7 +7,7 @@
       </v-snackbar>
 
       <v-layout align-center justify-center row wrap fill-height>
-        <v-flex xs8  sm5 md4>
+        <v-flex xs8 sm5 md4>
           <div class="relative">
             <div class="absolute">
               <v-img
@@ -28,14 +28,14 @@
                 <v-card-text>
                   <v-form>
                     <v-text-field
-                      placeholder="Email"
+                      :rules="emailRules"
                       v-model="email"
                       append-icon="person"
                       label="Email"
                       type="text"
                     ></v-text-field>
                     <v-text-field
-                      placeholder="Password"
+                      :rules="passwordRules"
                       v-model="password"
                       v-on:keyup.enter="login"
                       append-icon="lock"
@@ -46,7 +46,7 @@
                 </v-card-text>
                 <v-card-actions>
                   <v-spacer></v-spacer>
-                  <v-btn dark color="green" @click="login">Login</v-btn>
+                  <v-btn dark color="green" @click="login" :loading="isloading">Login</v-btn>
                 </v-card-actions>
               </v-container>
             </v-card>
@@ -58,33 +58,47 @@
 </template>
 
 <script>
+import { Encode, Decode } from "../services";
+
 export default {
   data: () => ({
     email: "",
     password: "",
+    emailRules: [
+      v => !!v || "E-mail is required",
+      v =>
+        /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+          v
+        ) || "E-mail must be valid"
+    ],
+    passwordRules: [v => !!v || "Password is required"],
     snackbar: false,
     textSnackbar: "Hello i am snackbar",
-    colorSnackbar: "green"
+    colorSnackbar: "green",
+    isloading: false
   }),
   methods: {
     async login() {
       try {
-        let result = await this.axios.get(
-          process.env.VUE_APP_API_INET +
-            `/login/${this.email}/${this.password}`,
-          {
-            headers: {
-              Authorization: `${process.env.VUE_APP_HEADER_AUTHORIZATION_INET}`
-            }
-          }
-        );
-        this.$router.replace("/form");
-        console.log(result);
+        this.isloading = true;
+        let result = await this.axios.post(process.env.VUE_APP_API + `/login`, {
+          username: this.email,
+          password: this.password
+        });
+        console.log("data", result.data);
+        let encodeUser = Encode.encode(result.data);
+        console.log("encodedUser", encodeUser);
+        this.$cookies.set("user", encodeUser);
+        console.log("decode", Decode.decode(encodeUser));
+        this.isloading = false;
+        this.$router.replace("/");
       } catch (error) {
+        this.isloading = false;
+
         if (error.response) {
           console.log(error.response.data);
           this.colorSnackbar = "red";
-          this.textSnackbar = error.response.data.message;
+          this.textSnackbar = error.response.data.msg;
           this.snackbar = true;
           console.log(error.response.status);
           console.log(error.response.headers);
@@ -106,8 +120,8 @@ export default {
   top: 0;
   left: 0;
   width: 100%;
-  height: 33%;
-  border-bottom-left-radius: 100%;
+  height: 44%;
+  border-bottom-left-radius: 30%;
   border-bottom-right-radius: 100%;
   background-image: -webkit-linear-gradient(180deg, #00b09b, #96c93d);
 }
