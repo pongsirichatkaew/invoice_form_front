@@ -3,21 +3,22 @@
     <v-dialog v-model="dialog" max-width="600px">
       <v-card>
         <v-toolbar flat>
-          <v-toolbar-title>Add User</v-toolbar-title>
+          <v-toolbar-title>เพิ่มผู้จัดการข้อมูล</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
           <v-container grid-list-md>
             <v-layout wrap>
               <v-flex xs12 sm6 md4>
                 <v-text-field
-                  label="Employee ID*"
+                  label="รหัสพนักงาน*"
                   required
                   :rules="addUserRules"
+                  :disabled="editUserId"
                   v-model="userIdAdd"
                 ></v-text-field>
               </v-flex>
               <v-flex xs12 sm6 d-flex>
-                <v-select v-model="selectRole" :items="items" label="Standard"></v-select>
+                <v-select v-model="selectRole" :items="items" label="ตำแหน่ง"></v-select>
               </v-flex>
             </v-layout>
           </v-container>
@@ -33,7 +34,7 @@
 
     <v-card-text>
       <v-toolbar flat color="white">
-        <v-toolbar-title>Users Admin</v-toolbar-title>
+        <v-toolbar-title>ผู้จัดการข้อมูล/ผู้ดูแลระบบ</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-text-field
           :loading="isSearch"
@@ -43,9 +44,16 @@
           single-line
           hide-details
         ></v-text-field>
-        <v-btn flat color="primary" @click="dialog = true">Add User</v-btn>
+        <v-btn flat color="primary" @click="dialog = true">เพิ่มผู้จัดการข้อมูล</v-btn>
       </v-toolbar>
-      <v-data-table :headers="headers" :items="users" :search="search" class="elevation-1">
+      <v-data-table
+        :headers="headers"
+        :items="users"
+        :search="search"
+        class="elevation-1"
+        :loading="isLoading"
+        :pagination.sync="pagination"
+      >
         <template v-slot:items="props">
           <td>{{ props.item.code }}</td>
           <td>{{ props.item.thainame }}</td>
@@ -56,12 +64,22 @@
           <td>{{ props.item.role }}</td>
 
           <td class="justify-center layout px-0">
-            <v-icon small @click="deleteUser(props.item.employee_id)">delete</v-icon>
+            <v-icon
+              small
+              class="mr-2"
+              @click="editUser(props.item)"
+              v-if="userId!==props.item.code && uesrRole !=2 "
+            >edit</v-icon>
+            <v-icon
+              small
+              @click="deleteUser(props.item.employee_id)"
+              v-if="userId!==props.item.code"
+            >delete</v-icon>
           </td>
         </template>
       </v-data-table>
     </v-card-text>
-    <v-snackbar v-model="snackbar" :color="colorSnackbar">
+    <v-snackbar v-model="snackbar" :color="colorSnackbar" top right>
       {{ textSnackbar }}
       <v-btn color="white" flat @click="snackbar = false">Close</v-btn>
     </v-snackbar>
@@ -75,15 +93,18 @@ import { Encode, Decode } from "../services/";
 export default {
   data() {
     return {
+      rowsPerPageItems: [10, 20, 30, 40],
+      pagination: {
+        rowsPerPage: 25
+      },
       dialog: false,
-      editDialog: false,
+      editUserId: false,
       userId: "",
+      uesrRole: "",
       userIdAdd: "",
       addUserRules: [
-        v => !!v || "Employee Id is required",
-        v =>
-          /^\+?(0|[1-9]\d*)$/.test(v) ||
-          "Employee Id need to be valid number and be positive"
+        v => !!v || "กรุณาใส่รหัสพนักงาน",
+        v => /^\+?(0|[1-9]\d*)$/.test(v) || "รหัสพนักงานต้องเป็นจำนวนเต็มบวก"
       ],
       snackbar: false,
       textSnackbar: "Hello i am snackbar",
@@ -107,7 +128,8 @@ export default {
         { text: "Action", sortable: false, align: "middle" }
       ],
       items: [],
-      selectRole: ""
+      selectRole: "",
+      isLoading: false
     };
   },
   methods: {
@@ -116,6 +138,7 @@ export default {
     },
     async getAllUsers() {
       try {
+        this.isLoading = true;
         this.users = [];
         let result = await this.axios.post(
           process.env.VUE_APP_API + `/show_admin`,
@@ -143,6 +166,7 @@ export default {
           };
           this.users.push(u);
         });
+        this.isLoading = false;
       } catch (error) {
         if (error.response) {
           console.log(error.response.data);
@@ -158,6 +182,11 @@ export default {
         }
         console.log(error.config);
       }
+    },
+    editUser(user) {
+      this.dialog = true;
+      this.editUserId = true;
+      this.userIdAdd = user.code;
     },
     async insertUser() {
       try {
@@ -189,7 +218,7 @@ export default {
         if (error.response) {
           console.log(error.response.data.msg);
           this.colorSnackbar = "red";
-          this.text = error.response.data.msg;
+          this.textSnackbar = error.response.data.msg;
           this.snackbar = true;
           console.log(error.response.status);
           console.log(error.response.headers);
@@ -216,6 +245,8 @@ export default {
     console.log("jsonObj", obj);
     this.userId = obj.userid;
     let role = obj.role;
+    this.uesrRole = role;
+
     if (role === 2) {
       this.items.push("ผู้จัดการข้อมูล");
     } else if (role === 3) {

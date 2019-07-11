@@ -6,20 +6,72 @@
         <v-spacer></v-spacer>
         <v-text-field v-model="search" append-icon="search" label="Search" single-line hide-details></v-text-field>
       </v-toolbar>
-      <v-data-table :headers="headers" :items="items" :search="search" class="elevation-1">
+      <v-snackbar v-model="snackbar" :color="colorSnackbar" right top>
+        {{ textSnackbar }}
+        <v-btn color="white" flat @click="snackbar = false">Close</v-btn>
+      </v-snackbar>
+      <v-data-table
+        :headers="headers"
+        :items="items"
+        :search="search"
+        class="elevation-1"
+        :pagination.sync="pagination"
+      >
         <template v-slot:items="props">
           <td>{{ props.item.id }}</td>
           <td>{{ props.item.invoiceNumber }}</td>
           <td>{{ props.item.service }}</td>
           <td>{{ props.item.last_created }}</td>
           <td>{{ props.item.status }}</td>
+          <td class="justify-center layout px-0">
+            <v-btn
+              class="btn-document"
+              :color="props.item.receiveDocumentStatus"
+              :disabled="props.item.receiveDocumentDisabled"
+              @click="openConfirmForm(props.item)"
+            >{{props.item.receiveDocument}}</v-btn>
+          </td>
           <td class="text-xs-center">
             <v-icon small @click="openInfoDialog(props.item)">mdi-file-document</v-icon>
           </td>
-          <td class="justify-center layout px-0">
-            <v-icon small class="mr-2" @click>mdi-check-outline</v-icon>
-            <v-icon small @click>mdi-close-outline</v-icon>
-          </td>
+          <v-dialog v-model="confirmDialog" persistent max-width="600px">
+            <v-card>
+              <v-toolbar flat>
+                <v-toolbar-title>ยืนยันการรับเอกสาร</v-toolbar-title>
+              </v-toolbar>
+              <v-card-text>
+                <v-container grid-list-md>
+                  <v-layout wrap>
+                    <v-flex xs12 sm12 md12>
+                      <v-text-field
+                        label="เลขที่เอกสาร*"
+                        disabled
+                        required
+                        v-model="confirmInvoiceNumber"
+                      ></v-text-field>
+                    </v-flex>
+                    <v-flex xs12 sm12 d-flex>
+                      <v-text-field label="รหัสพนักงาน*" v-model="userId" disabled></v-text-field>
+                    </v-flex>
+                    <v-flex xs12 sm12 md12>
+                      <v-text-field
+                        label="รหัสผ่าน*"
+                        type="password"
+                        required
+                        v-model="confirmPassword"
+                      ></v-text-field>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+                <small>*indicates required field</small>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="blue darken-1" flat @click="confirmDialog = false">ปิด</v-btn>
+                <v-btn color="blue darken-1" flat @click="confirmForm(props.item)">บันทึก</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
         </template>
       </v-data-table>
     </v-card-text>
@@ -139,6 +191,10 @@ pdfMake.fonts = {
 export default {
   data() {
     return {
+      rowsPerPageItems: [10, 20, 30, 40],
+      pagination: {
+        rowsPerPage: 25
+      },
       headers: [
         {
           text: "ลำดับ",
@@ -153,9 +209,13 @@ export default {
         { text: "บริการที่ใช้งาน", value: "service" },
         { text: "วันที่แก้ไขล่าสุด", value: "last_created" },
         { text: "สถานะ", value: "status" },
-        { text: "เอกสาร", value: "", sortable: false, align: "center" },
-
-        { text: "อนุมัติ", value: "name", sortable: false, align: "center" }
+        {
+          text: "การรับเอกสาร",
+          value: "name",
+          sortable: false,
+          align: "center"
+        },
+        { text: "เอกสาร", value: "", sortable: false, align: "center" }
       ],
       items: [],
       search: "",
@@ -169,7 +229,17 @@ export default {
       isApprove: false,
       approveComment: "",
       headlinneApprove: "",
-      btnApprove: ""
+      btnApprove: "",
+      confirmDialog: false,
+      confirmInvoiceNumber: "",
+      confirmCode: "",
+      confirmPassword: "",
+      id_user: "",
+      password: "",
+      snackbar: false,
+      textSnackbar: "",
+      colorSnackbar: "green",
+      isloading: false
     };
   },
   components: {
@@ -247,7 +317,7 @@ export default {
         if (error.response) {
           console.log(error.response.data);
           this.colorSnackbar = "red";
-          this.text = error.response.data.result;
+          this.textSnackbar = error.response.data;
           this.snackbar = true;
           console.log(error.response.status);
           console.log(error.response.headers);
@@ -280,6 +350,18 @@ export default {
         console.log(result);
         let index = 1;
         result.data.forEach(form => {
+          let receiveDocument = "รอการอนุมัติ";
+          let receiveDocumentDisabled = false;
+          let receiveDocumentStatus = "info";
+          if (form.status === "อนุมัติ") {
+            receiveDocument = "ยืนยันการรับเอกสาร";
+            receiveDocumentStatus = "success";
+          } else if (form.status === "ไม่อนุมัติ") {
+            receiveDocument = "ไม่ได้รับการอนุมัติ";
+            receiveDocumentStatus = "error";
+          } else {
+            receiveDocumentDisabled = true;
+          }
           console.log("form", form);
           let f = {
             id: index++,
@@ -304,7 +386,10 @@ export default {
             invoiceOtherDescription: form.other_text,
             invoiceDescription: form.debt_text,
             last_created: form.create_at,
-            status: form.status
+            status: form.status,
+            receiveDocument: receiveDocument,
+            receiveDocumentDisabled: receiveDocumentDisabled,
+            receiveDocumentStatus: receiveDocumentStatus
           };
           this.items.push(f);
         });
@@ -312,7 +397,53 @@ export default {
         if (error.response) {
           console.log(error.response.data);
           this.colorSnackbar = "red";
-          this.text = error.response.data.result;
+          this.textSnackbar = error.response.data;
+          this.snackbar = true;
+          console.log(error.response.status);
+          console.log(error.response.headers);
+        } else if (error.request) {
+          console.log(error.request);
+        } else {
+          console.log("Error", error.message);
+        }
+        console.log(error.config);
+      }
+    },
+    openConfirmForm(form) {
+      if (form.receiveDocumentStatus == "success") {
+        this.confirmInvoiceNumber = form.invoiceNumber;
+        this.confirmDialog = true;
+      } else {
+        Swal.fire({
+          type: "error",
+          text: "เอกสารยังไม่ได้รับการอนุมัติ"
+        });
+      }
+    },
+    async confirmForm(form) {
+      try {
+        let result = await this.axios.post(
+          process.env.VUE_APP_API + `/confirm`,
+          {
+            id_user: this.userId,
+            id_from: form.invoiceNumber,
+            password: this.confirmPassword
+          }
+        );
+        Swal.fire({
+          type: "success",
+          title: "รับเอกสารเรียบร้อยแล้ว",
+          showConfirmButton: false,
+          timer: 1500
+        });
+        console.log(result);
+        this.confirmDialog = false;
+        this.getAllInvoiceForm();
+      } catch (error) {
+        if (error.response) {
+          console.log(error.response.data);
+          this.colorSnackbar = "red";
+          this.textSnackbar = error.response.data;
           this.snackbar = true;
           console.log(error.response.status);
           console.log(error.response.headers);
@@ -461,7 +592,15 @@ export default {
   display: block;
   width: 150px;
 }
->>> .v-btn__content {
+>>> .btn-approved > .v-btn__content {
   justify-content: left;
+}
+>>> .btn-reject > .v-btn__content {
+  justify-content: left;
+}
+
+.btn-document {
+  border-radius: 22px;
+  /* box-shadow: 4px -7px 81px -2px rgba(0, 0, 0, 1); */
 }
 </style>

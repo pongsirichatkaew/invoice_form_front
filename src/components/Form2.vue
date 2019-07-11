@@ -5,7 +5,6 @@
         <v-text-field
           v-model="invoice.service"
           :disabled="disabled"
-          outline
           label="บริการที่ใช้งาน"
           :rules="serviceRules"
         ></v-text-field>
@@ -138,6 +137,7 @@
           name="input-7-1"
           label="สาเหตุการลดหนี้"
           v-model="invoice.invoiceDescription"
+          :rules="invoiceDescriptionRules"
           :disabled="disabled"
           hint="บอกเหตุผลที่ต้องการ"
         ></v-textarea>
@@ -165,11 +165,14 @@ export default {
       disabledBtn: false,
       itemsYear: [],
       itemsMonth: [],
-      serviceRules: [v => !!v || "Service is required"]
+      itemsMonthFrom: [],
+      itemsMonthTo: [],
+      serviceRules: [v => !!v || "Service is required"],
+      invoiceDescriptionRules: [v => !!v || "กรุณาบอกเหตุผล"]
     };
   },
   computed: {
-    ...mapState(["dialog", "invoice"]),
+    ...mapState(["dialog", "invoice", "updateDialog"]),
 
     e1: {
       get() {
@@ -276,6 +279,10 @@ export default {
   },
   methods: {
     setMonth() {
+      let currentTime = new Date();
+      let month = this.checkMonth(currentTime.getMonth());
+      console.log("month", month);
+      this.invoice.sinceServiceMonth = `${month}`;
       this.itemsMonth.push("มกราคม");
       this.itemsMonth.push("กุมภาพันธ์");
       this.itemsMonth.push("มีนาคม");
@@ -286,13 +293,14 @@ export default {
       this.itemsMonth.push("สิงหาคม");
       this.itemsMonth.push("กันยายน");
       this.itemsMonth.push("ตุลาคม");
-      this.itemsMonth.push("พศจิกายน");
+      this.itemsMonth.push("พฤศจิกายน");
       this.itemsMonth.push("ธันวาคม");
     },
     setYear() {
       let currentTime = new Date();
       let year = currentTime.getFullYear() + 543;
-      this.select = year;
+
+      this.invoice.sinceServiceYear = `${year}`;
       for (let index = -10; index < 10; index++) {
         let nYear = year + index;
         this.itemsYear.push(`${nYear}`);
@@ -303,6 +311,48 @@ export default {
         this.e1 = 3;
       } else {
         this.disabledBtn = true;
+      }
+    },
+    checkMonth(index) {
+      switch (index) {
+        case 0:
+          return "มกราคม";
+          break;
+        case 1:
+          return "กุมภาพันธ์";
+          break;
+        case 2:
+          return "มีนาคม";
+          break;
+        case 3:
+          return "เมษายน";
+          break;
+        case 4:
+          return "พฤษภาคม";
+          break;
+        case 5:
+          return "มิถุนายน";
+          break;
+        case 6:
+          return "กรกฏาคม";
+          break;
+        case 7:
+          return "สิงหาคม";
+          break;
+        case 8:
+          return "กันยายน";
+          break;
+        case 9:
+          return "ตุลาคม";
+          break;
+        case 10:
+          return "พฤศจิกายน";
+          break;
+        case 11:
+          return "ธันวาคม";
+          break;
+        default:
+          return "";
       }
     }
   },

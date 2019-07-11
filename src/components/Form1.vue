@@ -7,9 +7,8 @@
             v-model="invoice.invoiceNumber"
             :rules="invoiceNumberRules"
             label="เลขที่ใบลดหนี้"
-            :disabled="disabled"
+            :disabled="disabled||updateDialog"
             required
-            
           ></v-text-field>
         </v-flex>
         <v-layout justify-space-between>
@@ -20,7 +19,6 @@
               :disabled="disabled"
               label="รหัสลูกค้า"
               required
-              
             ></v-text-field>
           </v-flex>
 
@@ -31,7 +29,6 @@
               :disabled="disabled"
               label="ชื่อลูกค้า"
               required
-              
             ></v-text-field>
           </v-flex>
 
@@ -41,7 +38,6 @@
               :rules="invoiceSlipRules"
               :disabled="disabled"
               label="เลขที่ใบแจ้งหนี้/เลขที่ใบเสร็จรับเงิน"
-              
             ></v-text-field>
           </v-flex>
         </v-layout>
@@ -53,7 +49,6 @@
               label="อ้างอิง S/O เลขที่"
               :disabled="disabled"
               required
-              
             ></v-text-field>
           </v-flex>
           <v-flex xs12 md7>
@@ -63,7 +58,6 @@
               label="จำนวนเงินตามใบแจ้งหนี้ (ไม่รวมภาษีมูลค้าเพิ่ม)"
               :disabled="disabled"
               required
-              
             ></v-text-field>
           </v-flex>
         </v-layout>

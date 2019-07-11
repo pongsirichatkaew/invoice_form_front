@@ -2,12 +2,23 @@
   <v-app>
     <v-card-text>
       <v-toolbar flat color="white">
-        <v-toolbar-title>Table</v-toolbar-title>
+        <v-toolbar-title>ตารางอนุมัติหนี้</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-text-field v-model="search" append-icon="search" label="Search" single-line hide-details></v-text-field>
         <v-btn outline class="buttonInsert" @click="getDialog">Insert</v-btn>
       </v-toolbar>
-      <v-data-table :headers="headers" :items="items" :search="search" class="elevation-1">
+      <v-snackbar v-model="snackbar" :color="colorSnackbar" right top>
+        {{ textSnackbar }}
+        <v-btn color="white" flat @click="snackbar = false">Close</v-btn>
+      </v-snackbar>
+      <v-data-table
+        :headers="headers"
+        :items="items"
+        :search="search"
+        class="elevation-1"
+        :loading="isLoadingAll"
+        :pagination.sync="pagination"
+      >
         <template v-slot:items="props">
           <td>{{ props.item.id }}</td>
           <td>{{ props.item.invoiceNumber }}</td>
@@ -90,6 +101,14 @@
             </v-btn>
           </v-toolbar-items>
         </v-toolbar>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn class="btn-pdf" color="info" large dark v-on="on" @click="savePdf()">
+              <v-icon left>mdi-file</v-icon>ดูเอกสาร
+            </v-btn>
+          </template>
+          <span>ดูเอกสาร</span>
+        </v-tooltip>
         <infoForm1></infoForm1>
         <infoForm2></infoForm2>
       </v-card>
@@ -154,10 +173,15 @@ import Form2Info from "./Form2Info";
 import InfoForm from "./InfoForm";
 import { mapState } from "vuex";
 import { Encode, Decode } from "../services/";
+import Swal from "sweetalert2";
 
 export default {
   data() {
     return {
+      rowsPerPageItems: [10, 20, 30, 40],
+      pagination: {
+        rowsPerPage: 25
+      },
       headers: [
         {
           text: "ลำดับ",
@@ -194,6 +218,10 @@ export default {
           status: ":)"
         }
       ],
+      isLoadingAll: false,
+      snackbar: false,
+      textSnackbar: "Hello i am snackbar",
+      colorSnackbar: "green",
       search: "",
       notifications: false,
       sound: true,
@@ -231,6 +259,8 @@ export default {
     },
     async getAllForm() {
       try {
+        this.isLoadingAll = true;
+
         this.items = [];
         let result = await this.axios.post(process.env.VUE_APP_API + `/menu`, {
           user_id: this.userId
@@ -266,11 +296,12 @@ export default {
           };
           this.items.push(f);
         });
+        this.isLoadingAll = false;
       } catch (error) {
         if (error.response) {
           console.log(error.response.data);
           this.colorSnackbar = "red";
-          this.text = error.response.data.result;
+          this.textSnackbar = error.response.data.result;
           this.snackbar = true;
           console.log(error.response.status);
           console.log(error.response.headers);
@@ -318,16 +349,22 @@ export default {
           }
         );
         console.log(result);
-        await this.savePdf();
-
         this.getAllForm();
+
+        Swal.fire({
+          type: "success",
+          title: "เพิ่มใบแจ้งหนี้เรียบร้อยแล้ว",
+          showConfirmButton: false,
+          timer: 1500
+        });
+
         this.$store.commit("clearFormData");
         this.$store.commit("updateDialog", false);
       } catch (error) {
         if (error.response) {
           console.log(error.response.data);
           this.colorSnackbar = "red";
-          this.text = error.response.data.result;
+          this.textSnackbar = error.response.data.result;
           this.snackbar = true;
           console.log(error.response.status);
           console.log(error.response.headers);
@@ -349,6 +386,7 @@ export default {
       try {
         console.log(this.invoice);
         let result = await this.axios.post(process.env.VUE_APP_API + `/edit`, {
+          old_id_from: this.invoice.invoiceNumber,
           id_user: this.userId,
           id_from: this.invoice.invoiceNumber,
           create_at: new Date(),
@@ -386,7 +424,7 @@ export default {
         if (error.response) {
           console.log(error.response.data);
           this.colorSnackbar = "red";
-          this.text = error.response.data.result;
+          this.textSnackbar = error.response.data.result;
           this.snackbar = true;
           console.log(error.response.status);
           console.log(error.response.headers);
@@ -969,5 +1007,18 @@ export default {
 }
 .v-stepper__header {
   background-image: -webkit-linear-gradient(180deg, #96c93d, #00b09b);
+}
+.btn-pdf {
+  position: fixed;
+  top: 10%;
+  right: 0;
+  border: 0;
+  z-index: 999;
+  display: block;
+  width: 150px;
+  justify-content: left;
+}
+>>> .btn-pdf > .v-btn__content {
+  justify-content: left;
 }
 </style>

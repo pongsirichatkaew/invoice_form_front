@@ -53,7 +53,6 @@ export default new Vuex.Store({
     }
   },
   mutations: {
-
     updateE1: (state, payload) => {
       state.e1 = payload;
     },
