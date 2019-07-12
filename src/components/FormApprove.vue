@@ -93,6 +93,14 @@
         </v-toolbar>
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
+            <v-btn class="btn-pdf" color="info" large dark v-on="on" @click="savePdf()">
+              <v-icon left>mdi-file</v-icon>ดูเอกสาร
+            </v-btn>
+          </template>
+          <span>ดูเอกสาร</span>
+        </v-tooltip>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
             <v-btn
               class="btn-approved"
               color="success"
@@ -170,23 +178,6 @@ import { Encode, Decode } from "../services/";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 import Swal from "sweetalert2";
-
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
-
-pdfMake.fonts = {
-  THSarabunNew: {
-    normal: "THSarabunNew.ttf",
-    bold: "THSarabunNew-Bold.ttf",
-    italics: "THSarabunNew-Italic.ttf",
-    bolditalics: "THSarabunNew-BoldItalic.ttf"
-  },
-  Roboto: {
-    normal: "Roboto-Regular.ttf",
-    bold: "Roboto-Medium.ttf",
-    italics: "Roboto-Italic.ttf",
-    bolditalics: "Roboto-MediumItalic.ttf"
-  }
-};
 
 export default {
   data() {
@@ -456,70 +447,477 @@ export default {
       }
     },
     savePdf() {
-      let exId = 62107;
+      let symbolIncome = this.invoice.income
+        ? "check_box"
+        : "check_box_outline_blank";
+      console.log("symbolIncome", symbolIncome);
+      let symbolNotIncome = this.invoice.notIncome
+        ? "check_box"
+        : "check_box_outline_blank";
+      console.log("symbolNotIncome", symbolNotIncome);
+
+      let symbolOtherIncome = this.invoice.otherIncome
+        ? "check_box"
+        : "check_box_outline_blank";
+      let symbolInvoiceFull = this.invoice.income
+        ? this.invoice.invoiceFull
+          ? "check_box"
+          : "check_box_outline_blank"
+        : "check_box_outline_blank";
+      let symbolInvoicePartial = this.invoice.income
+        ? this.invoice.invoicePartial
+          ? "check_box"
+          : "check_box_outline_blank"
+        : "check_box_outline_blank";
+
+      let invoiceFullAmount = this.invoice.invoiceFull
+        ? `${this.invoice.invoiceFullAmount}`
+        : "0";
+      let invoicePartialAmount = this.invoice.invoicePartial
+        ? `${this.invoice.invoicePartialAmount}`
+        : "0";
+
       var dd = {
         content: [
           {
-            text: "แบบฟอร์มขออนุมัติลดหนี้\n",
+            text: "แบบฟอร์มขออนุมัติลดหนี้  \n ",
             style: "header"
           },
           {
-            text: "ส่วนที่ 1 สำหรับผู้ออกเอกสาร\n",
-            style: "subheader"
+            style: "tableExample",
+            table: {
+              widths: ["*"],
+              body: [
+                [
+                  {
+                    text: "ส่วนที่ 1 สำหรับผู้ออกเอกสาร",
+                    style: "subheader"
+                  }
+                ],
+                [
+                  {
+                    alignment: "justify",
+                    columns: [
+                      {
+                        text: `\n\nรหัสลูกค้า: ${this.invoice.customerId}   ชื่อลูกค้า: ${this.invoice.customerName}\n อ้างอิง S/O เลขที่: ${this.invoice.soNumber}`,
+                        style: "headerLeft"
+                      },
+                      {
+                        text: `เลขที่ใบลดหนี้: ${this.invoice.invoiceNumber} \n\n เลขที่ใบแจ้งหนี้/เลขที่ใบเสร็จรับเงิน: ${this.invoice.invoiceSlip} \n จำนวนเงินตามใบแจ้งหนี้(ไม่รวมภาษีมูลค่าเพิ่ม): ${this.invoice.invoiceAmount} บาท`,
+                        style: "headerRight"
+                      }
+                    ]
+                  }
+                ]
+              ]
+            },
+            layout: {
+              fillColor: function(rowIndex, node, columnIndex) {
+                return rowIndex === 0 ? "#CCCCCC" : null;
+              }
+            }
           },
           {
-            text: `เลขที่ใบลดหนี้ 500001.....\n`,
-            style: "invoiceNumber"
+            style: "tableExample",
+            table: {
+              widths: ["*"],
+              body: [
+                [
+                  {
+                    text: "ขออนุมันติลดหนี้",
+                    style: "middleSubHeader"
+                  }
+                ]
+              ]
+            },
+            layout: {
+              fillColor: function(rowIndex, node, columnIndex) {
+                return rowIndex === 0 ? "#CCCCCC" : null;
+              }
+            }
           },
           {
-            text: `รหัสลูกค้า ....${exId}.... \t ชื่อลูกค้า ....แบงค์.... \t เลขที่ใบแจ้งหนี้/เลขที่ใบเสร็จรับเงิน ....500001....`,
-            style: "text"
+            style: "tableExample",
+            table: {
+              widths: ["*", "*"],
+              body: [
+                [
+                  {
+                    text: `บริการที่ใช้งาน: ${this.invoice.service}`,
+                    style: "headerLeft"
+                  },
+                  {
+                    text: `ตั้งแต่รอบบริการ พ.ศ.${this.invoice.sinceServiceYear} เดือน ${this.invoice.sinceServiceMonth} \n ถึงรอบบริการ พ.ศ.${this.invoice.toServiceYear} เดือน ${this.invoice.toServiceMonth}`,
+                    style: "headerLeft"
+                  }
+                ]
+              ]
+            }
           },
           {
-            text: `อ้างอิง S/O เลขที่ ${exId} \t จำนวนเงินตามใบแจ้งหนี้(ไม่รวมภาษีมูลค่าเพิ่ม) ${exId} บาท \n`,
-            style: "text"
+            style: "tableExample",
+            table: {
+              widths: ["*"],
+              body: [
+                [
+                  {
+                    columns: [
+                      {
+                        text: [
+                          { text: `${symbolIncome.trim()}`, style: "symbol1" },
+                          {
+                            text: [
+                              {
+                                text: "กรณีเปลี่ยนแปลงรายได้\n",
+                                style: "headerRight"
+                              },
+                              {
+                                text: `${symbolInvoiceFull}`,
+                                style: "symbol1"
+                              },
+                              {
+                                text: `ลดหนี้เต็มจำนวนจำนวน${invoiceFullAmount}บาท(ไม่รวม VAT)\n `,
+                                style: "headerLeft"
+                              },
+                              {
+                                text: `${symbolInvoicePartial}`,
+                                style: "symbol1"
+                              },
+                              {
+                                text: `ลดหนี้บางส่วนจำนวน${invoicePartialAmount}บาท(ไม่รวม VAT)`,
+                                style: "headerLeft"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        text: [
+                          {
+                            text: `${symbolNotIncome}`,
+                            style: "symbol1"
+                          },
+                          {
+                            text: " กรณีไม่เปลี่ยนแปลงรายได้ ",
+                            style: "headerRight"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              ]
+            }
           },
           {
-            text: `ขออนุมัติหนี้\n`,
-            style: "middleSubHeader"
+            style: "tableExample",
+            table: {
+              widths: ["*"],
+              body: [
+                [
+                  {
+                    text: [
+                      {
+                        text: `${symbolOtherIncome}`,
+                        style: "symbol1"
+                      },
+                      {
+                        text: `อื่นๆ: ${this.invoice.invoiceOtherDescription} \n`,
+                        style: "headerLeft"
+                      },
+                      {
+                        text: `สาเหตุการลดหนี้: ${this.invoice.invoiceDescription}`,
+                        style: "headerLeft"
+                      }
+                    ]
+                  }
+                ]
+              ]
+            }
           },
           {
-            text: `บริการที่ใช้งาน ............`,
-            style: "text"
+            style: "tableExample",
+            table: {
+              widths: ["*"],
+              body: [
+                [
+                  {
+                    text:
+                      "ส่วนที่ 2 สำหรับฝ่ายบริหารต้นทุน (ตรวจสอบต้นทุนที่เกิดขึ้นของบริการที่ขอลดหนี้)",
+                    style: "subheader"
+                  }
+                ],
+                [
+                  {
+                    columns: [
+                      {
+                        text: [
+                          { text: "check_box_outline_blank", style: "symbol1" },
+                          {
+                            text: [
+                              {
+                                text: " ต้นทุนบริการ \n \t",
+                                style: "headerRight"
+                              },
+                              {
+                                text: "check_box_outline_blank",
+                                style: "symbol1"
+                              },
+                              {
+                                text:
+                                  "มีค่าใช้จ่ายเกิดขึ้นแล้ว จำนวน .......... บาท(ไม่รวม VAT)\n\t",
+                                style: "headerRight"
+                              },
+                              {
+                                text:
+                                  "ค่าใช้จ่ายสำหรับบริการ .......... บาท(ไม่รวม VAT)\n",
+                                style: "headerRight"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        text: [
+                          {
+                            text: "\ncheck_box_outline_blank",
+                            style: "symbol1"
+                          },
+                          {
+                            text: " ยังไม่มีค่าใช้จ่ายเกิดขึ้น \n",
+                            style: "headerRight"
+                          },
+                          {
+                            text:
+                              "เนื่องจาก ................................................... ",
+                            style: "headerLeft"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              ]
+            },
+            layout: {
+              fillColor: function(rowIndex, node, columnIndex) {
+                return rowIndex === 0 ? "#CCCCCC" : null;
+              }
+            }
           },
-          "สถาปัตย์แจ๊กเก็ตภควัทคีตา เซรามิกพลานุภาพ ซิมโฟนีโต๋เต๋แซ็กมั้ย ไฮกุเทียมทานเทรดซีเรียส ดัมพ์เดโมมิวสิคทีวี เตี๊ยมพาร์หมวยโบรชัวร์พงษ์ โดมิโน วิลเลจโมหจริตโดมิโนอัลมอนด์ไมเกรน โกะโทร แจ๊กเก็ตโอเวอร์กาญจน์ นิวลอร์ด เรซิ่นออร์เดอร์เชอร์รี่ม็อบคอร์ปอเรชั่น อิมพีเรียลบัลลาสต์ไอซียูโปรดิวเซอร์ตอกย้ำ พาวเวอร์คอนแท็คอีสเตอร์ ทอล์คนรีแพทย์อาข่าโหลยโท่ยแอโรบิค แรงผลักมือถือบริกรโต๊ะจีนอุด้ง",
-          "ฟยอร์ดแฟลช การันตีเสือโคร่งเมคอัพ สปอต พ่อค้า ไกด์โพลารอยด์คอมเมนท์เสกสรรค์ สึนามิลีเมอร์ตุ๊ก อมาตยาธิปไตยเกรดเรซินชินบัญชรแชมพู ออเดอร์สติ๊กเกอร์สไตล์แชมพูจีดีพี วิดีโอไลน์ดีไซน์ พีเรียดไพลินอพาร์ทเมนต์ซีเรียส เวิร์ลด์วัจนะโลชั่น เพียวพาสเจอร์ไรส์เชฟผ้าห่มสวีท ไฮเวย์ เยนแชมเปญว่ะ คาเฟ่ดีมานด์จิ๊กฮวงจุ้ย โปรดักชั่นฮัม เอาต์รีพอร์ทสตรอเบอร์รีรีสอร์ต แซวจูเนียร์แลนด์ดิสเครดิต ฮาโลวีนคีตปฏิภาณเมี่ยงคำโอเวอร์ แพทเทิร์นจีดีพีฟลุทภควัมปติบาร์บี้ แกสโซฮอล์ล้มเหลว โต๋เต๋ฮาลาลโบกี้ โอวัลตินบูมตัวเองแฟรี่ เช็งเม้งยิมอันตรกิริยาโพลารอยด์ บู๊อิออน อุปนายิกาแชมเปี้ยน เอาท์รีทัชต่อรองสมาพันธ์ฟอร์ม แบล็กปาสกาลม้งโปรเจกต์ เทรดแอปเปิ้ลมินต์ แมชีนแฮมเบอร์เกอร์ทัวร์ ทับซ้อนเดบิตศิลปวัฒนธรรมไฮแจ็คแกงค์.",
-          "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Confectum ponit legam, perferendis nomine miserum, animi. Moveat nesciunt triari naturam posset, eveniunt specie deorsus efficiat sermone instituendarum fuisse veniat, eademque mutat debeo. Delectet plerique protervi diogenem dixerit logikh levius probabo adipiscuntur afficitur, factis magistra inprobitatem aliquo andriam obiecta, religionis, imitarentur studiis quam, clamat intereant vulgo admonitionem operis iudex stabilitas vacillare scriptum nixam, reperiri inveniri maestitiam istius eaque dissentias idcirco gravis, refert suscipiet recte sapiens oportet ipsam terentianus, perpauca sedatio aliena video.\n\n",
           {
-            text: "Subheader 2 - using subheader style",
-            style: "subheader"
+            style: "tableExample",
+            table: {
+              widths: ["*"],
+              body: [
+                [
+                  {
+                    text: [
+                      {
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
+                      },
+                      {
+                        text:
+                          " อื่นๆ น็อกคาวบอย คอลัมนิสต์ไบโอฮันนีมูน อพาร์ตเมนท์ เยอบีร่าเซี้ยวหยวนยาวี วอล์คเบอร์เกอร์แอปเปิลโฟล์ค กรีนโปรดักชั่นแซ็กมั้ย \n",
+                        style: "headerLeft"
+                      }
+                    ]
+                  }
+                ]
+              ]
+            }
           },
-          "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Confectum ponit legam, perferendis nomine miserum, animi. Moveat nesciunt triari naturam posset, eveniunt specie deorsus efficiat sermone instituendarum fuisse veniat, eademque mutat debeo. Delectet plerique protervi diogenem dixerit logikh levius probabo adipiscuntur afficitur, factis magistra inprobitatem aliquo andriam obiecta, religionis, imitarentur studiis quam, clamat intereant vulgo admonitionem operis iudex stabilitas vacillare scriptum nixam, reperiri inveniri maestitiam istius eaque dissentias idcirco gravis, refert suscipiet recte sapiens oportet ipsam terentianus, perpauca sedatio aliena video.",
-          "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Confectum ponit legam, perferendis nomine miserum, animi. Moveat nesciunt triari naturam posset, eveniunt specie deorsus efficiat sermone instituendarum fuisse veniat, eademque mutat debeo. Delectet plerique protervi diogenem dixerit logikh levius probabo adipiscuntur afficitur, factis magistra inprobitatem aliquo andriam obiecta, religionis, imitarentur studiis quam, clamat intereant vulgo admonitionem operis iudex stabilitas vacillare scriptum nixam, reperiri inveniri maestitiam istius eaque dissentias idcirco gravis, refert suscipiet recte sapiens oportet ipsam terentianus, perpauca sedatio aliena video.\n\n",
+
           {
-            text:
-              "It is possible to apply multiple styles, by passing an array. This paragraph uses two styles: quote and small. When multiple styles are provided, they are evaluated in the specified order which is important in case they define the same properties",
-            style: ["quote", "small"]
+            style: "tableExample",
+            table: {
+              widths: ["*"],
+              body: [
+                [
+                  {
+                    text: "ส่วนที่ 3 สำหรับฝ่ายบัญชีและการเงิน",
+                    style: "subheader"
+                  }
+                ],
+                [
+                  {
+                    text:
+                      "\t \t \t ความคิดเห็น: ไบโออุรังคธาตุ รวมมิตร โอเวอร์ดัมพ์ช็อปเปอร์ช็อปปิ้งออดิทอเรียม แม็กกาซีนเซอร์วิสอุปสงค์คอร์สเพนกวิน ช็อคธรรมาวืดแผดเผา อาร์ติสต์ม้ง แอปพริคอทโบตั๋น รีสอร์ตบลูเบอร์รี่อิออน แฟลชราสเบอร์รีเที่ยงคืนเอสเปรสโซ ฮวงจุ้ยเชอร์รี่ฟิวเจอร์แคมเปญ เซาท์ปาสคาล ฟิวเจอร์อะไมค์เฟรชชี่รากหญ้า เอนทรานซ์ต่อรองท็อปบู๊ทอะแคป พาวเวอร์สปิริตเพนกวินคอปเตอร์ สตาร์เป่ายิ้งฉุบกรรมาชน อันเดอร์ไคลแม็กซ์มาร์เก็ตติ้ง \n",
+                    style: "headerLeft"
+                  }
+                ]
+              ]
+            },
+            layout: {
+              fillColor: function(rowIndex, node, columnIndex) {
+                return rowIndex === 0 ? "#CCCCCC" : null;
+              }
+            }
+          },
+          {
+            style: "tableExample",
+
+            table: {
+              widths: ["*"],
+              headerRows: 1,
+              body: [
+                [
+                  {
+                    text: "ส่วนที่ 4 สำหรับฝ่ายบริหารกรณีเปลี่ยนแปลงรายได้",
+                    style: "subheader"
+                  }
+                ]
+              ]
+            },
+            layout: {
+              fillColor: function(rowIndex, node, columnIndex) {
+                return rowIndex === 0 ? "#CCCCCC" : null;
+              }
+            }
+          },
+          {
+            style: "tableExample",
+            table: {
+              widths: ["*", "*"],
+              body: [
+                [
+                  {
+                    text: [
+                      {
+                        text: "ความเห็นฝ่ายบริหาร \n",
+                        style: "middleSubHeader"
+                      },
+                      {
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
+                      },
+                      {
+                        text: " อนุมัติ \n",
+                        style: "headerLeft"
+                      },
+                      {
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
+                      },
+                      {
+                        text: " ขอข้อมูลเพิ่มเติมเรื่อง  ",
+                        style: "headerLeft"
+                      },
+                      {
+                        text:
+                          "\t .................................................. \n",
+                        style: "middleSubHeader"
+                      },
+
+                      {
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
+                      },
+                      {
+                        text: " ไม่อนุมัติ เนื่องจาก ",
+                        style: "headerLeft"
+                      },
+                      {
+                        text:
+                          "\t\t .................................................. \n",
+                        style: "middleSubHeader"
+                      },
+                      {
+                        text:
+                          "\t\t .................................................................................................... \n",
+                        style: "headerLeft"
+                      }
+                    ]
+                  },
+                  {
+                    text: [
+                      {
+                        text: "ความเห็นฝ่ายบริหาร \n",
+                        style: "middleSubHeader"
+                      },
+                      {
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
+                      },
+                      {
+                        text: " อนุมัติ \n",
+                        style: "headerLeft"
+                      },
+                      {
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
+                      },
+                      {
+                        text: " ขอข้อมูลเพิ่มเติมเรื่อง  ",
+                        style: "headerLeft"
+                      },
+                      {
+                        text:
+                          "\t .................................................. \n",
+                        style: "middleSubHeader"
+                      },
+
+                      {
+                        text: "check_box_outline_blank",
+                        style: "symbol1"
+                      },
+                      {
+                        text: " ไม่อนุมัติ เนื่องจาก ",
+                        style: "headerLeft"
+                      },
+                      {
+                        text:
+                          "\t\t ...................................................... \n",
+                        style: "middleSubHeader"
+                      },
+                      {
+                        text:
+                          "\t\t ................................................................................................ \n",
+                        style: "headerLeft"
+                      }
+                    ]
+                  }
+                ]
+              ]
+            }
           }
         ],
         defaultStyle: {
-          font: "THSarabunNew"
+          font: "THSarabunNew",
+          columnGap: 20
         },
         styles: {
           header: {
-            fontSize: 18,
+            fontSize: 20,
             bold: true,
             alignment: "center"
           },
+          tableExample: {
+            margin: [0, 0, 0, 0]
+          },
+          headerRight: {
+            fontSize: 13,
+            alignment: "right"
+          },
+          headerLeft: {
+            fontSize: 13,
+            alignment: "left"
+          },
           subheader: {
-            fontSize: 15,
+            fontSize: 13,
             bold: true
           },
           middleSubHeader: {
-            fontSize: 15,
+            fontSize: 13,
             bold: true,
             alignment: "center"
           },
+          fontawesome: {
+            font: "FontAwesome",
+            color: "#656565"
+          },
+          icon: { font: "Fontello" },
           quote: {
             italics: true
           },
@@ -538,7 +936,10 @@ export default {
         }
       };
 
-      pdfMake.createPdf(dd).download();
+      dd.styles.symbol = { font: "FontAwesome", color: "red" };
+      dd.styles.symbol1 = { font: "MaterialIconsRegular" };
+      pdfMake.createPdf(dd).open();
+      const pdfDocGenerator = pdfMake.createPdf(dd);
       // const pdfDocGenerator = pdfMake.createPdf(dd);
       // pdfDocGenerator.getBase64(data => {
       //   alert(data);
@@ -546,6 +947,43 @@ export default {
     }
   },
   created() {
+    pdfMake.fonts = {
+      THSarabunNew: {
+        normal: "THSarabunNew.ttf",
+        bold: "THSarabunNew-Bold.ttf",
+        italics: "THSarabunNew-Italic.ttf",
+        bolditalics: "THSarabunNew-BoldItalic.ttf"
+      },
+      Roboto: {
+        normal: "Roboto-Regular.ttf",
+        bold: "Roboto-Medium.ttf",
+        italics: "Roboto-Italic.ttf",
+        bolditalics: "Roboto-MediumItalic.ttf"
+      },
+      Fontello: {
+        normal: "fontello.ttf",
+        bold: "fontello.ttf",
+        italics: "fontello.ttf",
+        bolditalics: "fontello.ttf"
+      },
+      FontAwesome: {
+        normal: "fontawesome-webfont.ttf",
+        bold: "fontawesome-webfont.ttf",
+        italics: "fontawesome-webfont.ttf",
+        bolditalics: "fontawesome-webfont.ttf"
+      },
+      Wingdng2: {
+        normal: "wingdng2.ttf",
+        bold: "wingdng2.ttf",
+        italics: "wingdng2.ttf",
+        bolditalics: "wingdng2.ttf"
+      },
+      MaterialIconsRegular: {
+        normal: "MaterialIcons-Regular.ttf"
+      }
+    };
+
+    pdfMake.vfs = pdfFonts.pdfMake.vfs;
     var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
     console.log("jsonObj", obj);
     this.userId = obj.userid;
@@ -598,7 +1036,19 @@ export default {
 >>> .btn-reject > .v-btn__content {
   justify-content: left;
 }
-
+.btn-pdf {
+  position: fixed;
+  top: 5%;
+  right: 0;
+  border: 0;
+  z-index: 999;
+  display: block;
+  width: 150px;
+  justify-content: left;
+}
+>>> .btn-pdf > .v-btn__content {
+  justify-content: left;
+}
 .btn-document {
   border-radius: 22px;
   /* box-shadow: 4px -7px 81px -2px rgba(0, 0, 0, 1); */

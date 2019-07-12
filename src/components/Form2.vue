@@ -103,7 +103,7 @@
           </v-flex>
         </v-layout>
 
-        <v-container>
+        <v-container v-if="income"> 
           <v-layout align-center>
             <v-checkbox
               :disabled="!invoice.income||disabled"

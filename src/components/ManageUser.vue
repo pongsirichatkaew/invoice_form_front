@@ -13,7 +13,6 @@
                   label="รหัสพนักงาน*"
                   required
                   :rules="addUserRules"
-                  :disabled="editUserId"
                   v-model="userIdAdd"
                 ></v-text-field>
               </v-flex>
@@ -31,6 +30,37 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="editDialog" max-width="600px">
+      <v-card>
+        <v-toolbar flat>
+          <v-toolbar-title>เพิ่มผู้จัดการข้อมูล</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text>
+          <v-container grid-list-md>
+            <v-layout wrap>
+              <v-flex xs12 sm6 md4>
+                <v-text-field
+                  label="รหัสพนักงาน*"
+                  required
+                  disabled
+                  :rules="addUserRules"
+                  v-model="userIdAdd"
+                ></v-text-field>
+              </v-flex>
+              <v-flex xs12 sm6 d-flex>
+                <v-select v-model="selectRole" :items="items" label="ตำแหน่ง"></v-select>
+              </v-flex>
+            </v-layout>
+          </v-container>
+          <small>*indicates required field</small>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" flat @click="editDialog = false">Close</v-btn>
+          <v-btn color="blue darken-1" flat @click="updateUser" :disabled="checkEmployeeId">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <v-card-text>
       <v-toolbar flat color="white">
@@ -44,7 +74,7 @@
           single-line
           hide-details
         ></v-text-field>
-        <v-btn flat color="primary" @click="dialog = true">เพิ่มผู้จัดการข้อมูล</v-btn>
+        <v-btn flat color="primary" @click="clickOpenInsertDialog">เพิ่มผู้จัดการข้อมูล</v-btn>
       </v-toolbar>
       <v-data-table
         :headers="headers"
@@ -70,11 +100,7 @@
               @click="editUser(props.item)"
               v-if="userId!==props.item.code && uesrRole !=2 "
             >edit</v-icon>
-            <v-icon
-              small
-              @click="deleteUser(props.item.employee_id)"
-              v-if="userId!==props.item.code"
-            >delete</v-icon>
+            <v-icon small @click="deleteUser(props.item)" v-if="userId!==props.item.code">delete</v-icon>
           </td>
         </template>
       </v-data-table>
@@ -99,6 +125,7 @@ export default {
       },
       dialog: false,
       editUserId: false,
+      editDialog: false,
       userId: "",
       uesrRole: "",
       userIdAdd: "",
@@ -135,6 +162,10 @@ export default {
   methods: {
     isNormalInteger(str) {
       return /^\+?(0|[1-9]\d*)$/.test(str);
+    },
+    clickOpenInsertDialog() {
+      this.dialog = true;
+      this.userIdAdd = "";
     },
     async getAllUsers() {
       try {
@@ -184,8 +215,8 @@ export default {
       }
     },
     editUser(user) {
-      this.dialog = true;
-      this.editUserId = true;
+      console.log("userEdit", user);
+      this.editDialog = true;
       this.userIdAdd = user.code;
     },
     async insertUser() {
@@ -208,6 +239,91 @@ export default {
         Swal.fire({
           type: "success",
           title: "เพิ่มผู้จัดการข้อมูลเรียบร้อย",
+          showConfirmButton: false,
+          timer: 1500
+        });
+        console.log(result);
+        this.dialog = false;
+        this.getAllUsers();
+      } catch (error) {
+        if (error.response) {
+          console.log(error.response.data.msg);
+          this.colorSnackbar = "red";
+          this.textSnackbar = error.response.data.msg;
+          this.snackbar = true;
+          console.log(error.response.status);
+          console.log(error.response.headers);
+        } else if (error.request) {
+          console.log(error.request);
+        } else {
+          console.log("Error", error.message);
+        }
+        console.log(error.config);
+      }
+    },
+    async updateUser(user) {
+      try {
+        let role = 2;
+        if (this.selectRole === "ผู้จัดการข้อมูล") {
+          role = 2;
+        } else if (this.selectRole === "ผู้ดูแลระบบ") {
+          role = 3;
+        }
+        let result = await this.axios.post(
+          process.env.VUE_APP_API + `/add_admin`,
+          {
+            user_id: this.userId,
+            user_id_add: this.userIdAdd,
+            role: role
+          }
+        );
+
+        Swal.fire({
+          type: "success",
+          title: "เพิ่มผู้จัดการข้อมูลเรียบร้อย",
+          showConfirmButton: false,
+          timer: 1500
+        });
+        console.log(result);
+        this.editDialog = false;
+        this.getAllUsers();
+      } catch (error) {
+        if (error.response) {
+          console.log(error.response.data.msg);
+          this.colorSnackbar = "red";
+          this.textSnackbar = error.response.data.msg;
+          this.snackbar = true;
+          console.log(error.response.status);
+          console.log(error.response.headers);
+        } else if (error.request) {
+          console.log(error.request);
+        } else {
+          console.log("Error", error.message);
+        }
+        console.log(error.config);
+      }
+    },
+    async deleteUser(user) {
+      try {
+        console.log("delete", user);
+        let role = 2;
+        if (this.selectRole === "ผู้จัดการข้อมูล") {
+          role = 2;
+        } else if (this.selectRole === "ผู้ดูแลระบบ") {
+          role = 3;
+        }
+        let result = await this.axios.post(
+          process.env.VUE_APP_API + `/add_admin`,
+          {
+            user_id: this.userId,
+            user_id_add: user.code,
+            role: 1
+          }
+        );
+
+        Swal.fire({
+          type: "success",
+          title: "ลบผู้จัดการข้อมูลเรียบร้อย",
           showConfirmButton: false,
           timer: 1500
         });

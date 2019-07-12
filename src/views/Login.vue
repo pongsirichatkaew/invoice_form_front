@@ -7,11 +7,11 @@
       </v-snackbar>
 
       <v-layout align-center justify-center row wrap fill-height>
-        <v-flex xs8 sm5 md4>
+        <v-flex xs8 sm5 md3>
           <div class="relative">
             <div class="absolute">
               <v-img
-                src="https://pbs.twimg.com/profile_images/1080545769034108928/CEzHCTpI_400x400.jpg"
+                src="https://www.krungsri.com/bank/getmedia/623a66b4-326f-4ec0-a931-de8202f301c2/krungsri-guru-investments-25June2558-banner.jpg.aspx"
                 aspect-ratio="1"
                 class="grey lighten-2 circularImage"
               >
@@ -159,5 +159,6 @@ export default {
 }
 .circularImage {
   border-radius: 50%;
+  border-style: solid;
 }
 </style>
