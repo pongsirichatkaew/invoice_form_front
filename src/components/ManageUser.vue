@@ -26,7 +26,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" flat @click="dialog = false">Close</v-btn>
-          <v-btn color="blue darken-1" flat @click="insertUser" :disabled="checkEmployeeId">Save</v-btn>
+          <v-btn class="success" flat @click="insertUser" :disabled="checkEmployeeId">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -100,7 +100,11 @@
               @click="editUser(props.item)"
               v-if="userId!==props.item.code && uesrRole !=2 "
             >edit</v-icon>
-            <v-icon small @click="deleteUser(props.item)" v-if="userId!==props.item.code">delete</v-icon>
+            <v-icon
+              small
+              @click="deleteUser(props.item)"
+              v-if="userId!==props.item.code && uesrRole !=2"
+            >delete</v-icon>
           </td>
         </template>
       </v-data-table>
@@ -155,7 +159,7 @@ export default {
         { text: "Action", sortable: false, align: "middle" }
       ],
       items: [],
-      selectRole: "",
+      selectRole: "ผู้จัดการข้อมูล",
       isLoading: false
     };
   },
@@ -303,48 +307,60 @@ export default {
         console.log(error.config);
       }
     },
-    async deleteUser(user) {
-      try {
-        console.log("delete", user);
-        let role = 2;
-        if (this.selectRole === "ผู้จัดการข้อมูล") {
-          role = 2;
-        } else if (this.selectRole === "ผู้ดูแลระบบ") {
-          role = 3;
-        }
-        let result = await this.axios.post(
-          process.env.VUE_APP_API + `/add_admin`,
-          {
-            user_id: this.userId,
-            user_id_add: user.code,
-            role: 1
-          }
-        );
+    deleteUser(user) {
+      Swal.fire({
+        text: "คุณต้องการลบผู้ใช้นี้ใช้ไหม",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        cancelButtonText: "ไม่",
+        confirmButtonText: "ใช่"
+      }).then(async result => {
+        if (result.value) {
+          try {
+            console.log("delete", user);
+            let role = 2;
+            if (this.selectRole === "ผู้จัดการข้อมูล") {
+              role = 2;
+            } else if (this.selectRole === "ผู้ดูแลระบบ") {
+              role = 3;
+            }
+            let result = await this.axios.post(
+              process.env.VUE_APP_API + `/add_admin`,
+              {
+                user_id: this.userId,
+                user_id_add: user.code,
+                role: 1
+              }
+            );
 
-        Swal.fire({
-          type: "success",
-          title: "ลบผู้จัดการข้อมูลเรียบร้อย",
-          showConfirmButton: false,
-          timer: 1500
-        });
-        console.log(result);
-        this.dialog = false;
-        this.getAllUsers();
-      } catch (error) {
-        if (error.response) {
-          console.log(error.response.data.msg);
-          this.colorSnackbar = "red";
-          this.textSnackbar = error.response.data.msg;
-          this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          console.log("Error", error.message);
+            Swal.fire({
+              type: "success",
+              title: "ลบผู้จัดการข้อมูลเรียบร้อย",
+              showConfirmButton: false,
+              timer: 1500
+            });
+            console.log(result);
+            this.dialog = false;
+            this.getAllUsers();
+          } catch (error) {
+            if (error.response) {
+              console.log(error.response.data.msg);
+              this.colorSnackbar = "red";
+              this.textSnackbar = error.response.data.msg;
+              this.snackbar = true;
+              console.log(error.response.status);
+              console.log(error.response.headers);
+            } else if (error.request) {
+              console.log(error.request);
+            } else {
+              console.log("Error", error.message);
+            }
+            console.log(error.config);
+          }
         }
-        console.log(error.config);
-      }
+      });
     }
   },
   computed: {

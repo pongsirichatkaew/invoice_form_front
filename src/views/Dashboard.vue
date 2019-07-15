@@ -20,10 +20,11 @@
                 <v-list-tile-sub-title>{{itemP.subtitle}}</v-list-tile-sub-title>
               </v-list-tile-content>
 
-              <v-list-tile-action v-if="itemP.subicon">
+              <v-list-tile-action >
                 <v-icon>{{itemP.subicon}}</v-icon>
               </v-list-tile-action>
             </v-list-tile>
+            <v-divider class="white"></v-divider>
             <v-list class="transparent">
               <v-list-tile v-for="(itemM,index) in itemsMenu" :key="index" @click="itemM.method">
                 <v-list-tile-action>
@@ -38,7 +39,7 @@
     </v-navigation-drawer>
     <v-toolbar app>
       <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
-      <v-toolbar-title>Title</v-toolbar-title>
+      <v-toolbar-title></v-toolbar-title>
     </v-toolbar>
     <v-content>
       <v-container fluid>
@@ -103,7 +104,6 @@ export default {
       },
       {
         icon: "mdi-email",
-        subicon: "chat",
         title: `${obj.email}`,
         subtitle: "Email"
       },
@@ -125,5 +125,8 @@ export default {
   width: 100%;
   height: 33%;
   background-image: -webkit-linear-gradient(80deg, #96c93d, #00b09b);
+}
+>>> .v-divider {
+  border-bottom: 1px solid;
 }
 </style>

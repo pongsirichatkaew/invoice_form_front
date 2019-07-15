@@ -29,7 +29,8 @@ export default new Vuex.Store({
       invoicePartial: false,
       invoiceDescription: "",
       invoiceFullAmount: "",
-      invoicePartialAmount: ""
+      invoicePartialAmount: "",
+      status: ""
     }
   },
   getters: {
@@ -109,6 +110,7 @@ export default new Vuex.Store({
       state.invoice.invoiceDescription = "";
       state.invoice.invoiceFullAmount = "";
       state.invoice.invoicePartialAmount = "";
+      state.invoice.status = "";
     },
     updateInvoiceInfo: (state, payload) => {
       state.invoice.invoiceNumber = payload.invoiceNumber;
@@ -133,6 +135,7 @@ export default new Vuex.Store({
       state.invoice.invoiceDescription = payload.invoiceDescription;
       state.invoice.invoiceFullAmount = payload.invoiceFullAmount;
       state.invoice.invoicePartialAmount = payload.invoicePartialAmount;
+      state.invoice.status = payload.status;
     }
   },
   actions: {

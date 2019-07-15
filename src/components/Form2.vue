@@ -11,7 +11,7 @@
 
         <v-layout justify-space-between>
           <v-flex xs12 md2>
-            <v-text-field label="ตั้งแต่รอบบริการ" disabled></v-text-field>
+            <p class="title mt-4">ตั้งแต่รอบบริการ</p>
           </v-flex>
 
           <v-flex xs12 md4>
@@ -38,7 +38,7 @@
         </v-layout>
         <v-layout justify-space-between>
           <v-flex xs12 md2>
-            <v-text-field label="ถึงรอบบริการ" disabled></v-text-field>
+            <p class="title mt-4">ถึงรอบบริการ</p>
           </v-flex>
 
           <v-flex xs12 md4>
@@ -95,7 +95,8 @@
                 label
               ></v-checkbox>
               <v-text-field
-                :disabled="!otherIncome"
+                :disabled="!otherIncome||e1==3"
+                :rules="invoiceOtherDescriptionRules"
                 label="อื่นๆ"
                 v-model="invoice.invoiceOtherDescription"
               ></v-text-field>
@@ -103,30 +104,32 @@
           </v-flex>
         </v-layout>
 
-        <v-container v-if="income"> 
+        <v-container v-if="income">
           <v-layout align-center>
             <v-checkbox
-              :disabled="!invoice.income||disabled"
               v-model="invoice.invoiceFull"
               hide-details
               class="shrink mr-2"
+              :disabled="e1==3"
               label
             ></v-checkbox>
             <v-text-field
               v-model="invoice.invoiceFullAmount"
-              :disabled="!income||disabled"
+              :rules="invoiceFullAmountRules"
+              :disabled="!income||disabled||invoicePartial"
               label="ลดหนี้เต็มจำนวน จำนวน(บาท) (ไม่รวม VAT)"
             ></v-text-field>
           </v-layout>
           <v-layout align-center>
             <v-checkbox
-              :disabled="!invoice.income||disabled||invoicePartial"
               v-model="invoice.invoicePartial"
               hide-details
               class="shrink mr-2"
+              :disabled="e1==3"
             ></v-checkbox>
             <v-text-field
               v-model="invoice.invoicePartialAmount"
+              :rules="invoicePartialAmountRules"
               :disabled="!income||disabled||invoiceFull"
               label="ลดหนี้บางส่วน จำนวน(บาท) (ไม่รวม VAT)"
             ></v-text-field>
@@ -156,6 +159,7 @@
 <script>
 import { mapState } from "vuex";
 import { close } from "fs";
+import Swal from "sweetalert2";
 
 export default {
   data() {
@@ -168,12 +172,19 @@ export default {
       itemsMonthFrom: [],
       itemsMonthTo: [],
       serviceRules: [v => !!v || "Service is required"],
-      invoiceDescriptionRules: [v => !!v || "กรุณาบอกเหตุผล"]
+      invoiceDescriptionRules: [v => !!v || "กรุณาบอกเหตุผล"],
+      invoiceFullAmountRules: [
+        v => !!v || "AmountNumber is required",
+        v => /^[0-9]+$/.test(v) || "Only number is allowed"
+      ],
+      invoicePartialAmountRules: [],
+      invoiceOtherDescriptionRules: [],
+
+      count: 0
     };
   },
   computed: {
     ...mapState(["dialog", "invoice", "updateDialog"]),
-
     e1: {
       get() {
         return this.$store.getters.e1;
@@ -241,6 +252,8 @@ export default {
         this.income = true;
         this.notIncome = false;
         this.otherIncome = false;
+        this.invoiceOtherDescriptionRules = [];
+        this.invoice.invoiceOtherDescription = "";
       }
     },
     notIncome(value) {
@@ -248,6 +261,8 @@ export default {
         this.income = false;
         this.notIncome = true;
         this.otherIncome = false;
+        this.invoiceOtherDescriptionRules = [];
+        this.invoice.invoiceOtherDescription = "";
       }
     },
     otherIncome(value) {
@@ -255,6 +270,9 @@ export default {
         this.income = false;
         this.notIncome = false;
         this.otherIncome = true;
+        this.invoiceOtherDescriptionRules = [
+          v => !!v || "กรุณาใส่ข้อมูลเพิ่มเติม"
+        ];
       }
     },
     invoiceFull(value) {
@@ -262,6 +280,11 @@ export default {
         this.invoiceFull = true;
         this.invoicePartial = false;
         this.$store.commit("updatInvoicePartialAmount", "");
+        this.invoiceFullAmountRules = [
+          v => !!v || "AmountNumber is required",
+          v => /^[0-9]+$/.test(v) || "Only number is allowed"
+        ];
+        this.invoicePartialAmountRules = [];
       }
     },
     invoicePartial(value) {
@@ -269,6 +292,11 @@ export default {
         this.invoiceFull = false;
         this.invoicePartial = true;
         this.$store.commit("updatInvoiceFullAmount", "");
+        this.invoicePartialAmountRules = [
+          v => !!v || "Amount Number is required",
+          v => /^[0-9]+$/.test(v) || "Only number is allowed"
+        ];
+        this.invoiceFullAmountRules = [];
       }
     },
     dialog(value) {
@@ -282,7 +310,6 @@ export default {
       let currentTime = new Date();
       let month = this.checkMonth(currentTime.getMonth());
       console.log("month", month);
-      this.invoice.sinceServiceMonth = `${month}`;
       this.itemsMonth.push("มกราคม");
       this.itemsMonth.push("กุมภาพันธ์");
       this.itemsMonth.push("มีนาคม");
@@ -300,7 +327,6 @@ export default {
       let currentTime = new Date();
       let year = currentTime.getFullYear() + 543;
 
-      this.invoice.sinceServiceYear = `${year}`;
       for (let index = -10; index < 10; index++) {
         let nYear = year + index;
         this.itemsYear.push(`${nYear}`);
@@ -308,9 +334,31 @@ export default {
     },
     checkForm2Valid() {
       if (this.$refs.form2.validate()) {
-        this.e1 = 3;
+        if (!this.income && !this.notIncome && !this.otherIncome) {
+          Swal.fire({
+            type: "error",
+            text: "กรุณาเลือกการเปลี่ยนแปลงรายได้อย่างน้อย 1 หัวข้อ"
+          });
+        } else if (this.income) {
+          if (!this.invoiceFull && !this.invoicePartial) {
+            console.log("income");
+            Swal.fire({
+              type: "error",
+              text: "เลือกกรณีเปลี่ยนแปลงรายได้อย่างน้อย 1 ข้อ"
+            });
+          } else {
+            this.e1 = 3;
+          }
+        } else {
+          this.e1 = 3;
+        }
       } else {
         this.disabledBtn = true;
+      }
+    },
+    checkCount() {
+      if (!!this.income && !!this.notIncome && !!this.otherIncome) {
+        console.log("checkbox", false);
       }
     },
     checkMonth(index) {

@@ -33,6 +33,7 @@ export default new Router({
     },
     {
       path: "/admin",
+      redirect: "/admin/form",
       name: "admin",
       component: DashboardAdmin,
       beforeEnter: (to, from, next) => {
@@ -50,7 +51,7 @@ export default new Router({
       },
       children: [
         {
-          path: "",
+          path: "form",
           name: "formApproved",
           component: FormApproved
         },

@@ -54,12 +54,7 @@
                       <v-text-field label="รหัสพนักงาน*" v-model="userId" disabled></v-text-field>
                     </v-flex>
                     <v-flex xs12 sm12 md12>
-                      <v-text-field
-                        label="รหัสผ่าน*"
-                        type="password"
-                        required
-                        v-model="confirmPassword"
-                      ></v-text-field>
+                      <v-text-field label="รหัสพนักงานของผู้รับ*" required v-model="userIdConfirm"></v-text-field>
                     </v-flex>
                   </v-layout>
                 </v-container>
@@ -68,7 +63,12 @@
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn color="blue darken-1" flat @click="confirmDialog = false">ปิด</v-btn>
-                <v-btn color="blue darken-1" flat @click="confirmForm(props.item)">บันทึก</v-btn>
+                <v-btn
+                  class="success"
+                  flat
+                  @click="confirmForm(props.item)"
+                  :disabled="checkEmployeeId"
+                >บันทึก</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -91,48 +91,51 @@
           </v-btn>
           <v-toolbar-items class="hidden-sm-and-down"></v-toolbar-items>
         </v-toolbar>
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn class="btn-pdf" color="info" large dark v-on="on" @click="savePdf()">
-              <v-icon left>mdi-file</v-icon>ดูเอกสาร
-            </v-btn>
-          </template>
-          <span>ดูเอกสาร</span>
-        </v-tooltip>
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              class="btn-approved"
-              color="success"
-              large
-              dark
-              v-on="on"
-              @click="openApproveDialog(true)"
-            >
-              <v-icon left>mdi-check</v-icon>อนุมัติ
-            </v-btn>
-          </template>
-          <span>อนุมัติ</span>
-        </v-tooltip>
-
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              class="btn-reject"
-              color="error"
-              large
-              dark
-              v-on="on"
-              @click="openApproveDialog(false)"
-            >
-              <v-icon left>mdi-close</v-icon>ไม่อนุมัติ
-            </v-btn>
-          </template>
-          <span>ไม่อนุมัติ</span>
-        </v-tooltip>
 
         <infoForm1></infoForm1>
         <infoForm2></infoForm2>
+        <v-container>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                color="success"
+                large
+                dark
+                v-on="on"
+                @click="openApproveDialog(true)"
+                v-if="showBtnAprrove"
+              >
+                <v-icon left>mdi-check</v-icon>อนุมัติ
+              </v-btn>
+            </template>
+            <span>อนุมัติ</span>
+          </v-tooltip>
+
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                color="error"
+                large
+                dark
+                v-on="on"
+                @click="openApproveDialog(false)"
+                v-if="showBtnReject"
+              >
+                <v-icon left>mdi-close</v-icon>ไม่อนุมัติ
+              </v-btn>
+            </template>
+            <span>ไม่อนุมัติ</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn color="info" large dark v-on="on" @click="savePdf()">
+                <v-icon left>mdi-file</v-icon>ดูเอกสาร
+              </v-btn>
+            </template>
+            <span>ดูเอกสาร</span>
+          </v-tooltip>
+        </v-container>
+
         <v-dialog v-model="approveDialog" max-width="600px">
           <v-card>
             <v-card-title>
@@ -230,7 +233,10 @@ export default {
       snackbar: false,
       textSnackbar: "",
       colorSnackbar: "green",
-      isloading: false
+      isloading: false,
+      showBtnAprrove: true,
+      showBtnReject: false,
+      userIdConfirm: ""
     };
   },
   components: {
@@ -248,9 +254,18 @@ export default {
       set(value) {
         this.$store.dispatch("updateE1", value);
       }
+    },
+    checkEmployeeId() {
+      if (this.isNormalInteger(this.userIdConfirm)) {
+        return false;
+      }
+      return true;
     }
   },
   methods: {
+    isNormalInteger(str) {
+      return /^\+?(0|[1-9]\d*)$/.test(str);
+    },
     getDialog() {
       this.$store.commit("updateDialog", true);
     },
@@ -262,6 +277,16 @@ export default {
       this.infoDialog = true;
       this.$store.commit("updateInvoiceInfo", item);
       console.log("infoClicked", this.invoice);
+      if (this.invoice.status === "ไม่อนุมัติ") {
+        this.showBtnReject = false;
+        this.showBtnAprrove = false;
+      } else if (this.invoice.status === "อนุมัติ") {
+        this.showBtnReject = false;
+        this.showBtnAprrove = false;
+      } else {
+        this.showBtnReject = true;
+        this.showBtnAprrove = true;
+      }
     },
     openApproveDialog(value) {
       this.approveDialog = true;
@@ -303,6 +328,7 @@ export default {
         });
         console.log(result);
         this.closeInfoDialog();
+        this.closeApproveDialog();
         this.getAllInvoiceForm();
       } catch (error) {
         if (error.response) {
@@ -341,9 +367,11 @@ export default {
         console.log(result);
         let index = 1;
         result.data.forEach(form => {
+          console.log("formALl", form);
           let receiveDocument = "รอการอนุมัติ";
           let receiveDocumentDisabled = false;
           let receiveDocumentStatus = "info";
+
           if (form.status === "อนุมัติ") {
             receiveDocument = "ยืนยันการรับเอกสาร";
             receiveDocumentStatus = "success";
@@ -353,7 +381,6 @@ export default {
           } else {
             receiveDocumentDisabled = true;
           }
-          console.log("form", form);
           let f = {
             id: index++,
             invoiceNumber: form.id_from,
@@ -403,6 +430,7 @@ export default {
     openConfirmForm(form) {
       if (form.receiveDocumentStatus == "success") {
         this.confirmInvoiceNumber = form.invoiceNumber;
+        this.userIdConfirm = "";
         this.confirmDialog = true;
       } else {
         Swal.fire({
@@ -418,7 +446,7 @@ export default {
           {
             id_user: this.userId,
             id_from: form.invoiceNumber,
-            password: this.confirmPassword
+            password: this.userIdConfirm
           }
         );
         Swal.fire({

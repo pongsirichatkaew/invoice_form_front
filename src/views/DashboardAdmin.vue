@@ -20,10 +20,12 @@
                 <v-list-tile-sub-title>{{itemP.subtitle}}</v-list-tile-sub-title>
               </v-list-tile-content>
 
-              <v-list-tile-action v-if="itemP.subicon">
+              <v-list-tile-action>
                 <v-icon>{{itemP.subicon}}</v-icon>
               </v-list-tile-action>
             </v-list-tile>
+            <v-divider class="white"></v-divider>
+
             <v-list class="transparent">
               <v-list-tile
                 v-for="(itemM,index) in itemsMenu"
@@ -32,6 +34,7 @@
                 avatar
                 class="v-list-item"
                 @click="itemM.method"
+                active-class="white--text lime darken-1"
               >
                 <v-list-tile-action>
                   <v-icon color="white">{{itemM.icon}}</v-icon>
@@ -67,19 +70,19 @@ export default {
       itemsPerson: [],
       itemsMenu: [
         {
-          to: "/admin/",
-          icon: "mdi-home",
-          title: "Home",
-          method: ""
+          to: { name: "formApproved" },
+          icon: "mdi-file-document-box",
+          title: "Form",
+          method: this.m
         },
         {
-          to: "/admin/manage",
+          to: { name: "manageUser" },
           icon: "mdi-account-edit",
           title: "Manage user",
-          method: ""
+          method: this.m
         },
         {
-          to: "/login",
+          to: { name: "login" },
           icon: "mdi-logout",
           title: "Logout",
           method: this.logout
@@ -94,7 +97,8 @@ export default {
     logout() {
       this.$cookies.remove("user");
       this.$router.push("/login");
-    }
+    },
+    m() {}
   },
   created() {
     const Toast = Swal.mixin({
@@ -122,7 +126,7 @@ export default {
       },
       {
         icon: "mdi-email",
-        subicon: "chat",
+        subicon: "",
         title: `${obj.email}`,
         subtitle: "Email"
       },
@@ -143,6 +147,6 @@ export default {
   left: 0;
   width: 100%;
   height: 33%;
-  background-image: -webkit-linear-gradient(80deg, #ffe259, #ffa751);
+  background-image: -webkit-linear-gradient(80deg, #dce35b, #45b649);
 }
 </style>

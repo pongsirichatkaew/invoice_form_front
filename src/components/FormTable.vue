@@ -46,19 +46,19 @@
         <v-stepper v-model="e1">
           <v-stepper-header>
             <v-stepper-step :complete="e1 > 1" step="1">
-              <span class="white--text">Name of step1</span>
+              <span class="white--text"></span>
             </v-stepper-step>
 
             <v-divider></v-divider>
 
             <v-stepper-step :complete="e1 > 2" step="2">
-              <span class="white--text">Name of step1</span>
+              <span class="white--text"></span>
             </v-stepper-step>
 
             <v-divider></v-divider>
 
             <v-stepper-step step="3">
-              <span class="white--text">Name of step1</span>
+              <span class="white--text"></span>
             </v-stepper-step>
             <v-btn icon dark @click="closeDialog">
               <v-icon>close</v-icon>
@@ -101,16 +101,19 @@
             </v-btn>
           </v-toolbar-items>
         </v-toolbar>
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn class="btn-pdf" color="info" large dark v-on="on" @click="savePdf()">
-              <v-icon left>mdi-file</v-icon>ดูเอกสาร
-            </v-btn>
-          </template>
-          <span>ดูเอกสาร</span>
-        </v-tooltip>
+
         <infoForm1></infoForm1>
         <infoForm2></infoForm2>
+        <v-container>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn color="info" large dark v-on="on" @click="savePdf()">
+                <v-icon left>mdi-file</v-icon>พิมพ์เอกสาร
+              </v-btn>
+            </template>
+            <span>พิมพ์เอกสาร</span>
+          </v-tooltip>
+        </v-container>
       </v-card>
     </v-dialog>
 
@@ -124,15 +127,15 @@
       <v-card>
         <v-stepper v-model="e1">
           <v-stepper-header>
-            <v-stepper-step :complete="e1 > 1" step="1">Name of step 1</v-stepper-step>
+            <v-stepper-step :complete="e1 > 1" step="1"></v-stepper-step>
 
             <v-divider></v-divider>
 
-            <v-stepper-step :complete="e1 > 2" step="2">Name of step 2</v-stepper-step>
+            <v-stepper-step :complete="e1 > 2" step="2"></v-stepper-step>
 
             <v-divider></v-divider>
 
-            <v-stepper-step step="3">Name of step 3</v-stepper-step>
+            <v-stepper-step step="3"></v-stepper-step>
             <v-btn icon dark @click="closeUpdateDialog">
               <v-icon>close</v-icon>
             </v-btn>
@@ -200,24 +203,7 @@ export default {
 
         { text: "แก้ไขข้อมูล", value: "name", sortable: false, align: "center" }
       ],
-      items: [
-        {
-          id: 1,
-          invoiceNumber: "123",
-          customerId: "123",
-          customerName: "444",
-          invoiceSlip: "5555",
-          soNumber: "666",
-          invoiceAmount: "7777",
-          service: "is a Sample",
-          sinceServiceYear: 2555,
-          sinceServiceMonth: "มกราคม",
-          toServiceYear: 2560,
-          toServiceMonth: "กุมภาพันธ์",
-          last_created: "1/1/2022",
-          status: ":)"
-        }
-      ],
+      items: [],
       isLoadingAll: false,
       snackbar: false,
       textSnackbar: "Hello i am snackbar",
@@ -343,7 +329,7 @@ export default {
 
             not_change_income: this.invoice.notIncome ? 1 : 0,
             other: this.invoice.otherIncome ? 1 : 0,
-            other_text: this.invoice.other_text,
+            other_text: this.invoice.invoiceOtherDescription,
 
             debt_text: this.invoice.invoiceDescription
           }
