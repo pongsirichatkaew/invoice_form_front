@@ -20,7 +20,6 @@ export default new Router({
       beforeEnter: (to, from, next) => {
         if (window.$cookies.get("user")) {
           var obj = JSON.parse(Decode.decode(window.$cookies.get("user")));
-          console.log("role", obj.role);
           if (obj.role === 1) {
             next();
           } else if (obj.role === 2 || obj.role === 3) {
@@ -39,7 +38,6 @@ export default new Router({
       beforeEnter: (to, from, next) => {
         if (window.$cookies.get("user")) {
           var obj = JSON.parse(Decode.decode(window.$cookies.get("user")));
-          console.log("jsonObj", obj);
           if (obj.role === 1) {
             next("/");
           } else if (obj.role === 2 || obj.role === 3) {

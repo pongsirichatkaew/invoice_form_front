@@ -276,7 +276,6 @@ export default {
     openInfoDialog(item) {
       this.infoDialog = true;
       this.$store.commit("updateInvoiceInfo", item);
-      console.log("infoClicked", this.invoice);
       if (this.invoice.status === "ไม่อนุมัติ") {
         this.showBtnReject = false;
         this.showBtnAprrove = false;
@@ -309,7 +308,6 @@ export default {
         if (this.isApprove) {
           status = "อนุมัติ";
         }
-        console.log("invoice", this.invoice);
         let result = await this.axios.post(
           process.env.VUE_APP_API + `/approve`,
           {
@@ -326,24 +324,17 @@ export default {
           showConfirmButton: false,
           timer: 1500
         });
-        console.log(result);
         this.closeInfoDialog();
         this.closeApproveDialog();
         this.getAllInvoiceForm();
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     closeDialog() {
@@ -364,10 +355,8 @@ export default {
         let result = await this.axios.post(process.env.VUE_APP_API + `/menu`, {
           user_id: this.userId
         });
-        console.log(result);
         let index = 1;
         result.data.forEach(form => {
-          console.log("formALl", form);
           let receiveDocument = "รอการอนุมัติ";
           let receiveDocumentDisabled = false;
           let receiveDocumentStatus = "info";
@@ -413,18 +402,12 @@ export default {
         });
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
-        } else if (error.request) {
-          console.log(error.request);
+        } else if (erro.request) {
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     openConfirmForm(form) {
@@ -455,34 +438,25 @@ export default {
           showConfirmButton: false,
           timer: 1500
         });
-        console.log(result);
         this.confirmDialog = false;
         this.getAllInvoiceForm();
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     savePdf() {
       let symbolIncome = this.invoice.income
         ? "check_box"
         : "check_box_outline_blank";
-      console.log("symbolIncome", symbolIncome);
       let symbolNotIncome = this.invoice.notIncome
         ? "check_box"
         : "check_box_outline_blank";
-      console.log("symbolNotIncome", symbolNotIncome);
 
       let symbolOtherIncome = this.invoice.otherIncome
         ? "check_box"
@@ -1013,7 +987,6 @@ export default {
 
     pdfMake.vfs = pdfFonts.pdfMake.vfs;
     var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
-    console.log("jsonObj", obj);
     this.userId = obj.userid;
     this.getAllInvoiceForm();
   }

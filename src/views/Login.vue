@@ -85,29 +85,20 @@ export default {
           username: this.email,
           password: this.password
         });
-        console.log("data", result.data);
         let encodeUser = Encode.encode(result.data);
-        console.log("encodedUser", encodeUser);
         this.$cookies.set("user", encodeUser);
-        console.log("decode", Decode.decode(encodeUser));
         this.isloading = false;
         this.$router.replace("/");
       } catch (error) {
         this.isloading = false;
 
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.msg;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     }
   }

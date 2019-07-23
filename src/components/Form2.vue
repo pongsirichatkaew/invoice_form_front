@@ -309,7 +309,6 @@ export default {
     setMonth() {
       let currentTime = new Date();
       let month = this.checkMonth(currentTime.getMonth());
-      console.log("month", month);
       this.itemsMonth.push("มกราคม");
       this.itemsMonth.push("กุมภาพันธ์");
       this.itemsMonth.push("มีนาคม");
@@ -341,7 +340,6 @@ export default {
           });
         } else if (this.income) {
           if (!this.invoiceFull && !this.invoicePartial) {
-            console.log("income");
             Swal.fire({
               type: "error",
               text: "เลือกกรณีเปลี่ยนแปลงรายได้อย่างน้อย 1 ข้อ"
@@ -358,7 +356,6 @@ export default {
     },
     checkCount() {
       if (!!this.income && !!this.notIncome && !!this.otherIncome) {
-        console.log("checkbox", false);
       }
     },
     checkMonth(index) {

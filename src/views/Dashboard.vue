@@ -92,7 +92,6 @@ export default {
     });
 
     var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
-    console.log("jsonObjDashboard", obj);
     this.userId = obj.userid;
     this.name = `${obj.title} ${obj.name} ${obj.lastname}`;
 

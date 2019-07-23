@@ -181,9 +181,7 @@ export default {
             user_id: this.userId
           }
         );
-        console.log(result);
         result.data.msg.forEach(user => {
-          console.log(user);
           let roleText = "";
           if (user.role === 2) {
             roleText = "ผู้จัดการข้อมูล";
@@ -204,22 +202,15 @@ export default {
         this.isLoading = false;
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.text = error.response.data.result;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     editUser(user) {
-      console.log("userEdit", user);
       this.editDialog = true;
       this.userIdAdd = user.code;
     },
@@ -246,23 +237,16 @@ export default {
           showConfirmButton: false,
           timer: 1500
         });
-        console.log(result);
         this.dialog = false;
         this.getAllUsers();
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data.msg);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.msg;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     async updateUser(user) {
@@ -288,23 +272,16 @@ export default {
           showConfirmButton: false,
           timer: 1500
         });
-        console.log(result);
         this.editDialog = false;
         this.getAllUsers();
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data.msg);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.msg;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     deleteUser(user) {
@@ -319,7 +296,6 @@ export default {
       }).then(async result => {
         if (result.value) {
           try {
-            console.log("delete", user);
             let role = 2;
             if (this.selectRole === "ผู้จัดการข้อมูล") {
               role = 2;
@@ -341,23 +317,16 @@ export default {
               showConfirmButton: false,
               timer: 1500
             });
-            console.log(result);
             this.dialog = false;
             this.getAllUsers();
           } catch (error) {
             if (error.response) {
-              console.log(error.response.data.msg);
               this.colorSnackbar = "red";
               this.textSnackbar = error.response.data.msg;
               this.snackbar = true;
-              console.log(error.response.status);
-              console.log(error.response.headers);
             } else if (error.request) {
-              console.log(error.request);
             } else {
-              console.log("Error", error.message);
             }
-            console.log(error.config);
           }
         }
       });
@@ -365,7 +334,6 @@ export default {
   },
   computed: {
     checkEmployeeId() {
-      console.log("checkEmployeeId");
       if (this.isNormalInteger(this.userIdAdd)) {
         return false;
       }
@@ -374,7 +342,6 @@ export default {
   },
   created() {
     var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
-    console.log("jsonObj", obj);
     this.userId = obj.userid;
     let role = obj.role;
     this.uesrRole = role;

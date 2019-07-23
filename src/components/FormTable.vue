@@ -239,7 +239,6 @@ export default {
       this.$store.commit("updateDialog", true);
     },
     getUpdateDialog(item) {
-      console.log("itemupdated", item);
       this.$store.commit("updateUpdatedialog", true);
       this.$store.commit("updateInvoiceInfo", item);
     },
@@ -251,10 +250,8 @@ export default {
         let result = await this.axios.post(process.env.VUE_APP_API + `/menu`, {
           user_id: this.userId
         });
-        console.log(result);
         let index = 1;
         result.data.forEach(form => {
-          console.log("form", form);
           let f = {
             id: index++,
             invoiceNumber: form.id_from,
@@ -285,23 +282,16 @@ export default {
         this.isLoadingAll = false;
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.result;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     async addinvoiceDoc() {
       try {
-        console.log(this.invoice);
         let result = await this.axios.post(
           process.env.VUE_APP_API + `/create`,
           {
@@ -334,7 +324,6 @@ export default {
             debt_text: this.invoice.invoiceDescription
           }
         );
-        console.log(result);
         this.getAllForm();
 
         Swal.fire({
@@ -348,29 +337,20 @@ export default {
         this.$store.commit("updateDialog", false);
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.result;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     openInfoDialog(item) {
       this.infoDialog = true;
       this.$store.commit("updateInvoiceInfo", item);
-      console.log(item);
-      console.log("infoClicked", this.invoice);
     },
     async updateInvoice() {
       try {
-        console.log(this.invoice);
         let result = await this.axios.post(process.env.VUE_APP_API + `/edit`, {
           old_id_from: this.invoice.invoiceNumber,
           id_user: this.userId,
@@ -401,25 +381,18 @@ export default {
 
           debt_text: this.invoice.invoiceDescription
         });
-        console.log(result);
         // await this.savePdf();
         this.getAllForm();
         this.$store.commit("clearFormData");
         this.$store.commit("updateUpdatedialog", false);
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.result;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     closeDialog() {
@@ -438,11 +411,9 @@ export default {
       let symbolIncome = this.invoice.income
         ? "check_box"
         : "check_box_outline_blank";
-      console.log("symbolIncome", symbolIncome);
       let symbolNotIncome = this.invoice.notIncome
         ? "check_box"
         : "check_box_outline_blank";
-      console.log("symbolNotIncome", symbolNotIncome);
 
       let symbolOtherIncome = this.invoice.otherIncome
         ? "check_box"
@@ -974,7 +945,6 @@ export default {
     pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
     var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
-    console.log("jsonObj", obj);
     this.userId = obj.userid;
     this.getAllForm();
   }

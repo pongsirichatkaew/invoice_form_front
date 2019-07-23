@@ -108,14 +108,12 @@ export default {
     e1(value) {
       if (value === 3) {
         this.disabled = true;
-        console.log("e1", value);
       } else {
         this.disabled = false;
       }
     },
     valid(value) {
       if (value) {
-        console.log(value);
         this.disabledBtn = false;
       }
     },
@@ -133,8 +131,6 @@ export default {
   methods: {
     checkForm1Valid() {
       if (this.$refs.form1.validate()) {
-        console.log("isForm1Validate", this.$refs.form1.validate());
-        console.log(this.$store.state.invoice);
         this.e1 = 2;
       } else {
         this.disabledBtn = true;

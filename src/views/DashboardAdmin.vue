@@ -48,7 +48,7 @@
     </v-navigation-drawer>
     <v-toolbar app>
       <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
-      <v-toolbar-title>Title</v-toolbar-title>
+      <v-toolbar-title></v-toolbar-title>
     </v-toolbar>
     <v-content>
       <v-container fluid>
@@ -114,7 +114,6 @@ export default {
     });
 
     var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
-    console.log("jsonObjDashboard", obj);
     this.userId = obj.userid;
     this.name = `${obj.title} ${obj.name} ${obj.lastname}`;
 
