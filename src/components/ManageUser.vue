@@ -1,8 +1,8 @@
 <template>
-  <v-app>
+  <div>
     <v-dialog v-model="dialog" max-width="600px">
       <v-card>
-        <v-toolbar flat>
+        <v-toolbar text>
           <v-toolbar-title>เพิ่มผู้จัดการข้อมูล</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
@@ -25,14 +25,14 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" flat @click="dialog = false">Close</v-btn>
-          <v-btn color="blue darken-1" flat @click="insertUser" :disabled="checkEmployeeId">Save</v-btn>
+          <v-btn color="blue darken-1" text @click="dialog = false">Close</v-btn>
+          <v-btn class="success" text @click="insertUser" :disabled="checkEmployeeId">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
     <v-dialog v-model="editDialog" max-width="600px">
       <v-card>
-        <v-toolbar flat>
+        <v-toolbar>
           <v-toolbar-title>เพิ่มผู้จัดการข้อมูล</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
@@ -56,8 +56,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" flat @click="editDialog = false">Close</v-btn>
-          <v-btn color="blue darken-1" flat @click="updateUser" :disabled="checkEmployeeId">Save</v-btn>
+          <v-btn color="blue darken-1" text @click="editDialog = false">Close</v-btn>
+          <v-btn color="blue darken-1" text @click="updateUser" :disabled="checkEmployeeId">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -67,14 +67,16 @@
         <v-toolbar-title>ผู้จัดการข้อมูล/ผู้ดูแลระบบ</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-text-field
+          class="mr-3"
           :loading="isSearch"
           v-model="search"
-          append-icon="search"
-          label="Search Anything Here"
+          append-icon="mdi-magnify"
+          label="ค้นหาข้อมูล"
+          outlined
           single-line
           hide-details
         ></v-text-field>
-        <v-btn flat color="primary" @click="clickOpenInsertDialog">เพิ่มผู้จัดการข้อมูล</v-btn>
+        <v-btn color="primary" @click="clickOpenInsertDialog">เพิ่มผู้จัดการข้อมูล</v-btn>
       </v-toolbar>
       <v-data-table
         :headers="headers"
@@ -82,9 +84,22 @@
         :search="search"
         class="elevation-1"
         :loading="isLoading"
-        :pagination.sync="pagination"
+        :items-per-page="itemsPerPage"
       >
-        <template v-slot:items="props">
+        <template v-slot:item.action="{ item }">
+          <v-icon
+            small
+            class="mr-2"
+            @click="editUser(item)"
+            v-if="userId!==item.code && uesrRole !=2 "
+          >mdi-edit</v-icon>
+          <v-icon
+            small
+            @click="deleteUser(item)"
+            v-if="userId!==item.code && uesrRole !=2"
+          >mdi-delete</v-icon>
+        </template>
+        <!-- <template v-slot:items="props">
           <td>{{ props.item.code }}</td>
           <td>{{ props.item.thainame }}</td>
           <td>{{ props.item.engname }}</td>
@@ -100,29 +115,31 @@
               @click="editUser(props.item)"
               v-if="userId!==props.item.code && uesrRole !=2 "
             >edit</v-icon>
-            <v-icon small @click="deleteUser(props.item)" v-if="userId!==props.item.code">delete</v-icon>
+            <v-icon
+              small
+              @click="deleteUser(props.item)"
+              v-if="userId!==props.item.code && uesrRole !=2"
+            >delete</v-icon>
           </td>
-        </template>
+        </template>-->
       </v-data-table>
     </v-card-text>
     <v-snackbar v-model="snackbar" :color="colorSnackbar" top right>
       {{ textSnackbar }}
-      <v-btn color="white" flat @click="snackbar = false">Close</v-btn>
+      <v-btn color="white" text @click="snackbar = false">Close</v-btn>
     </v-snackbar>
-  </v-app>
+  </div>
 </template>
 
 <script>
 import Swal from "sweetalert2";
-import { Encode, Decode } from "../services/";
+import { Decode } from "../services/";
 
 export default {
   data() {
     return {
       rowsPerPageItems: [10, 20, 30, 40],
-      pagination: {
-        rowsPerPage: 25
-      },
+      itemsPerPage: 25,
       dialog: false,
       editUserId: false,
       editDialog: false,
@@ -152,10 +169,10 @@ export default {
         { text: "ตำแหน่ง", value: "position" },
         { text: "หน้าที่", value: "role" },
 
-        { text: "Action", sortable: false, align: "middle" }
+        { text: "Action", value: "action", sortable: false, align: "middle" }
       ],
       items: [],
-      selectRole: "",
+      selectRole: "ผู้จัดการข้อมูล",
       isLoading: false
     };
   },
@@ -177,9 +194,7 @@ export default {
             user_id: this.userId
           }
         );
-        console.log(result);
         result.data.msg.forEach(user => {
-          console.log(user);
           let roleText = "";
           if (user.role === 2) {
             roleText = "ผู้จัดการข้อมูล";
@@ -200,22 +215,15 @@ export default {
         this.isLoading = false;
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.text = error.response.data.result;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     editUser(user) {
-      console.log("userEdit", user);
       this.editDialog = true;
       this.userIdAdd = user.code;
     },
@@ -242,23 +250,16 @@ export default {
           showConfirmButton: false,
           timer: 1500
         });
-        console.log(result);
         this.dialog = false;
         this.getAllUsers();
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data.msg);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.msg;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     async updateUser(user) {
@@ -284,72 +285,66 @@ export default {
           showConfirmButton: false,
           timer: 1500
         });
-        console.log(result);
         this.editDialog = false;
         this.getAllUsers();
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data.msg);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.msg;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
         } else if (error.request) {
-          console.log(error.request);
         } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
-    async deleteUser(user) {
-      try {
-        console.log("delete", user);
-        let role = 2;
-        if (this.selectRole === "ผู้จัดการข้อมูล") {
-          role = 2;
-        } else if (this.selectRole === "ผู้ดูแลระบบ") {
-          role = 3;
-        }
-        let result = await this.axios.post(
-          process.env.VUE_APP_API + `/add_admin`,
-          {
-            user_id: this.userId,
-            user_id_add: user.code,
-            role: 1
-          }
-        );
+    deleteUser(user) {
+      Swal.fire({
+        text: "คุณต้องการลบผู้ใช้นี้ใช้ไหม",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        cancelButtonText: "ไม่",
+        confirmButtonText: "ใช่"
+      }).then(async result => {
+        if (result.value) {
+          try {
+            let role = 2;
+            if (this.selectRole === "ผู้จัดการข้อมูล") {
+              role = 2;
+            } else if (this.selectRole === "ผู้ดูแลระบบ") {
+              role = 3;
+            }
+            let result = await this.axios.post(
+              process.env.VUE_APP_API + `/add_admin`,
+              {
+                user_id: this.userId,
+                user_id_add: user.code,
+                role: 1
+              }
+            );
 
-        Swal.fire({
-          type: "success",
-          title: "ลบผู้จัดการข้อมูลเรียบร้อย",
-          showConfirmButton: false,
-          timer: 1500
-        });
-        console.log(result);
-        this.dialog = false;
-        this.getAllUsers();
-      } catch (error) {
-        if (error.response) {
-          console.log(error.response.data.msg);
-          this.colorSnackbar = "red";
-          this.textSnackbar = error.response.data.msg;
-          this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          console.log("Error", error.message);
+            Swal.fire({
+              type: "success",
+              title: "ลบผู้จัดการข้อมูลเรียบร้อย",
+              showConfirmButton: false,
+              timer: 1500
+            });
+            this.dialog = false;
+            this.getAllUsers();
+          } catch (error) {
+            if (error.response) {
+              this.colorSnackbar = "red";
+              this.textSnackbar = error.response.data.msg;
+              this.snackbar = true;
+            }
+          }
         }
-        console.log(error.config);
-      }
+      });
     }
   },
   computed: {
     checkEmployeeId() {
-      console.log("checkEmployeeId");
       if (this.isNormalInteger(this.userIdAdd)) {
         return false;
       }
@@ -358,7 +353,6 @@ export default {
   },
   created() {
     var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
-    console.log("jsonObj", obj);
     this.userId = obj.userid;
     let role = obj.role;
     this.uesrRole = role;

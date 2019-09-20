@@ -1,9 +1,10 @@
+/* eslint-disable no-useless-escape */
 <template>
   <v-app class="background">
     <v-container>
       <v-snackbar v-model="snackbar" :color="colorSnackbar" right top>
         {{ textSnackbar }}
-        <v-btn color="white" flat @click="snackbar = false">Close</v-btn>
+        <v-btn color="white" text @click="snackbar = false">Close</v-btn>
       </v-snackbar>
 
       <v-layout align-center justify-center row wrap fill-height>
@@ -30,7 +31,7 @@
                     <v-text-field
                       :rules="emailRules"
                       v-model="email"
-                      append-icon="person"
+                      append-icon="mdi-person"
                       label="Email"
                       type="text"
                     ></v-text-field>
@@ -38,7 +39,7 @@
                       :rules="passwordRules"
                       v-model="password"
                       v-on:keyup.enter="login"
-                      append-icon="lock"
+                      append-icon="mdi-lock"
                       label="Password"
                       type="password"
                     ></v-text-field>
@@ -58,7 +59,7 @@
 </template>
 
 <script>
-import { Encode, Decode } from "../services";
+import { Encode } from "../services";
 
 export default {
   data: () => ({
@@ -67,6 +68,7 @@ export default {
     emailRules: [
       v => !!v || "E-mail is required",
       v =>
+        // eslint-disable-next-line no-useless-escape
         /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
           v
         ) || "E-mail must be valid"
@@ -85,29 +87,18 @@ export default {
           username: this.email,
           password: this.password
         });
-        console.log("data", result.data);
         let encodeUser = Encode.encode(result.data);
-        console.log("encodedUser", encodeUser);
         this.$cookies.set("user", encodeUser);
-        console.log("decode", Decode.decode(encodeUser));
         this.isloading = false;
-        this.$router.replace("/");
+        this.$router.replace("/dashboard");
       } catch (error) {
+        console.log("error", error.request);
         this.isloading = false;
-
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.msg;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     }
   }
@@ -160,5 +151,8 @@ export default {
 .circularImage {
   border-radius: 50%;
   border-style: solid;
+}
+.fill-height {
+  height: 100vh;
 }
 </style>

@@ -1,60 +1,51 @@
 <template>
-  <v-form>
+  <v-form lazy-validation>
     <v-card class="ma-3">
+      <v-app-bar flat color="primary">
+        <v-toolbar-title style="color:white">ส่วนที่ 1 สำหรับผู้ออกเอกสาร</v-toolbar-title>
+      </v-app-bar>
       <v-container>
-        <v-flex xs12 md2>
-          <v-text-field
-            v-model="invoice.invoiceNumber"
-            label="เลขที่ใบลดหนี้"
-            disabled
-            required
-          ></v-text-field>
-        </v-flex>
-        <v-layout justify-space-between>
-          <v-flex xs12 md2>
+        <v-layout justify-end align-end row wrap>
+          <v-flex xs12 md3>
             <v-text-field
-              v-model="invoice.customerId"
+              class="pl-3 pr-3"
+              v-model="my_invoice.invoiceDoc"
+              label="เลขที่เอกสาร"
               disabled
-              label="รหัสลูกค้า"
               required
+            ></v-text-field>
+          </v-flex>
+        </v-layout>
+
+        <v-layout justify-space-between row wrap>
+          <v-flex xs12 md3>
+            <v-text-field
+              class="pl-3 pr-3"
+              v-model="my_invoice.invoiceNumber"
+              label="เลขที่ใบลดหนี้"
+              disabled
             ></v-text-field>
           </v-flex>
 
           <v-flex xs12 md3>
             <v-text-field
-              v-model="invoice.customerName"
+              class="pl-3 pr-3"
+              v-model="my_invoice.customerId"
               disabled
-              label="ชื่อลูกค้า"
-              required
+              label="รหัสลูกค้า"
             ></v-text-field>
           </v-flex>
 
-          <v-flex xs12 md6>
+          <v-flex xs12 md3>
             <v-text-field
-              v-model="invoice.invoiceSlip"
+              class="pl-3 pr-3"
+              v-model="my_invoice.customerName"
               disabled
-              label="เลขที่ใบแจ้งหนี้/เลขที่ใบเสร็จรับเงิน"
+              label="ชื่อลูกค้า"
             ></v-text-field>
           </v-flex>
         </v-layout>
-        <v-layout justify-space-between>
-          <v-flex xs12 md4>
-            <v-text-field
-              v-model="invoice.soNumber"
-              label="อ้างอิง S/O เลขที่"
-              disabled
-              required
-            ></v-text-field>
-          </v-flex>
-          <v-flex xs12 md7>
-            <v-text-field
-              v-model="invoice.invoiceAmount"
-              label="จำนวนเงินตามใบแจ้งหนี้ (ไม่รวมภาษีมูลค้าเพิ่ม)"
-              disabled
-              required
-            ></v-text-field>
-          </v-flex>
-        </v-layout>
+        <v-layout justify-space-between></v-layout>
       </v-container>
     </v-card>
   </v-form>
@@ -68,7 +59,7 @@ export default {
     return {};
   },
   computed: {
-    ...mapState(["dialog", "invoice"])
+    ...mapState(["dialog", "invoice", "my_invoice"])
   }
 };
 </script>

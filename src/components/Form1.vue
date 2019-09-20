@@ -1,20 +1,32 @@
 <template>
   <v-form ref="form1" v-model="valid" lazy-validation>
     <v-card class="ma-3">
+      <v-app-bar flat color="primary">
+        <v-toolbar-title style="color:white">ส่วนที่ 1 สำหรับผู้ออกเอกสาร</v-toolbar-title>
+      </v-app-bar>
       <v-container>
-        <v-flex xs12 md2>
-          <v-text-field
-            v-model="invoice.invoiceNumber"
-            :rules="invoiceNumberRules"
-            label="เลขที่ใบลดหนี้"
-            :disabled="disabled||updateDialog"
-            required
-          ></v-text-field>
-        </v-flex>
-        <v-layout justify-space-between>
-          <v-flex xs12 md2>
+        <v-layout justify-end align-end>
+          <v-flex xs12 md3>
+            <v-text-field v-model="lastInvoiceDoc" label="เลขที่เอกสาร" disabled required></v-text-field>
+          </v-flex>
+        </v-layout>
+
+        <v-layout justify-space-between row wrap>
+          <v-flex xs12 md3>
             <v-text-field
-              v-model="invoice.customerId"
+              class="pl-3 pr-3"
+              v-model="my_invoice.invoiceNumber"
+              :rules="invoiceNumberRules"
+              label="เลขที่ใบลดหนี้"
+              :disabled="disabled||updateDialog"
+              required
+            ></v-text-field>
+          </v-flex>
+
+          <v-flex xs12 md3>
+            <v-text-field
+              class="pl-3 pr-3"
+              v-model="my_invoice.customerId"
               :rules="customerIdRules"
               :disabled="disabled"
               label="รหัสลูกค้า"
@@ -24,49 +36,16 @@
 
           <v-flex xs12 md3>
             <v-text-field
-              v-model="invoice.customerName"
+              class=" pr-3"
+              v-model="my_invoice.customerName"
               :rules="customerNameRules"
               :disabled="disabled"
               label="ชื่อลูกค้า"
               required
             ></v-text-field>
           </v-flex>
-
-          <v-flex xs12 md6>
-            <v-text-field
-              v-model="invoice.invoiceSlip"
-              :rules="invoiceSlipRules"
-              :disabled="disabled"
-              label="เลขที่ใบแจ้งหนี้/เลขที่ใบเสร็จรับเงิน"
-            ></v-text-field>
-          </v-flex>
         </v-layout>
-        <v-layout justify-space-between>
-          <v-flex xs12 md4>
-            <v-text-field
-              v-model="invoice.soNumber"
-              :rules="soNumberRules"
-              label="อ้างอิง S/O เลขที่"
-              :disabled="disabled"
-              required
-            ></v-text-field>
-          </v-flex>
-          <v-flex xs12 md7>
-            <v-text-field
-              v-model="invoice.invoiceAmount"
-              :rules="invoiceAmountRules"
-              label="จำนวนเงินตามใบแจ้งหนี้ (ไม่รวมภาษีมูลค้าเพิ่ม)"
-              :disabled="disabled"
-              required
-            ></v-text-field>
-          </v-flex>
-        </v-layout>
-        <v-btn
-          color="primary"
-          @click="checkForm1Valid"
-          :disabled="disabledBtn"
-          v-if="e1==1"
-        >Continue</v-btn>
+        <v-layout justify-space-between></v-layout>
       </v-container>
     </v-card>
   </v-form>
@@ -74,7 +53,6 @@
 
 <script>
 import { mapState } from "vuex";
-import { close } from "fs";
 
 export default {
   data() {
@@ -82,19 +60,22 @@ export default {
       valid: true,
       disabled: false,
       disabledBtn: false,
-      invoiceNumberRules: [v => !!v || "Invoice Number is required"],
-      customerIdRules: [v => !!v || "CustomerIdRules is required"],
-      customerNameRules: [v => !!v || "Customer Name is required"],
-      invoiceSlipRules: [v => !!v || "Invoice Slip is required"],
-      soNumberRules: [v => !!v || "S/O Number is required"],
-      invoiceAmountRules: [
-        v => !!v || "S/O Number is required",
-        v => /^[0-9]+$/.test(v) || "Only number is allowed"
-      ]
+      invoiceNumberRules: [v => !!v || "กรุณาใส่เลขที่ใบลดหนี้"],
+      customerIdRules: [v => !!v || "กรุณาใส่รหัสลูกค้า"],
+      customerNameRules: [v => !!v || "กรุณาใส่ชื่อลูกค้า"],
+
+      test: true,
+      count: 0
     };
   },
   computed: {
-    ...mapState(["dialog", "updateDialog", "invoice"]),
+    ...mapState([
+      "dialog",
+      "infoDialog",
+      "updateDialog",
+      "my_invoice",
+      "lastInvoiceDoc"
+    ]),
     e1: {
       get() {
         return this.$store.getters.e1;
@@ -108,15 +89,18 @@ export default {
     e1(value) {
       if (value === 3) {
         this.disabled = true;
-        console.log("e1", value);
       } else {
         this.disabled = false;
       }
     },
     valid(value) {
       if (value) {
-        console.log(value);
         this.disabledBtn = false;
+      }
+    },
+    infoDialog(value) {
+      if (!value) {
+        this.$refs.form1.resetValidation();
       }
     },
     dialog(value) {
@@ -133,11 +117,7 @@ export default {
   methods: {
     checkForm1Valid() {
       if (this.$refs.form1.validate()) {
-        console.log("isForm1Validate", this.$refs.form1.validate());
-        console.log(this.$store.state.invoice);
         this.e1 = 2;
-      } else {
-        this.disabledBtn = true;
       }
     }
   }

@@ -1,5 +1,6 @@
 import Vue from "vue";
 import Vuex from "vuex";
+
 Vue.use(Vuex);
 
 export default new Vuex.Store({
@@ -7,6 +8,7 @@ export default new Vuex.Store({
     //All the property
     e1: 1,
     dialog: false,
+    infoDialog: false,
     updateDialog: false,
 
     invoice: {
@@ -29,27 +31,87 @@ export default new Vuex.Store({
       invoicePartial: false,
       invoiceDescription: "",
       invoiceFullAmount: "",
-      invoicePartialAmount: ""
-    }
+      invoicePartialAmount: "",
+      status: "",
+      comment: ""
+    },
+    props: [],
+    my_invoice: {
+      invoiceDoc: "",
+      invoiceNumber: "",
+      customerId: "",
+      customerName: "",
+      income: true,
+      notIncome: false,
+      otherIncome: false,
+      invoiceOtherDescription: "",
+      invoiceFull: true,
+      invoicePartial: false,
+      invoiceDescription: "",
+      invoiceFullAmount: "",
+      invoicePartialAmount: "",
+      status: "",
+      comment: "",
+      invoice: [
+        {
+          invoiceSlip: "",
+          soNumber: "",
+          invoiceAmount: "",
+          service: "",
+          from_date: "",
+          to_date: "",
+          menuStart: false,
+          menuStop: false
+        }
+      ]
+    },
+    lastInvoiceDoc: ""
   },
   getters: {
     e1: state => {
       return state.e1;
     },
     income: state => {
-      return state.invoice.income;
+      if (state.my_invoice.income === 1 || state.my_invoice.income === true) {
+        return true;
+      }
+      return false;
     },
     notIncome: state => {
-      return state.invoice.notIncome;
+      if (
+        state.my_invoice.notIncome === 1 ||
+        state.my_invoice.notIncome === true
+      ) {
+        return true;
+      }
+      return false;
     },
     otherIncome: state => {
-      return state.invoice.otherIncome;
+      if (
+        state.my_invoice.otherIncome === 1 ||
+        state.my_invoice.otherIncome === true
+      ) {
+        return true;
+      }
+      return false;
     },
     invoiceFull: state => {
-      return state.invoice.invoiceFull;
+      if (
+        state.my_invoice.invoiceFull === 1 ||
+        state.my_invoice.invoiceFull === true
+      ) {
+        return true;
+      }
+      return false;
     },
     invoicePartial: state => {
-      return state.invoice.invoicePartial;
+      if (
+        state.my_invoice.invoicePartial === 1 ||
+        state.my_invoice.invoicePartial === true
+      ) {
+        return true;
+      }
+      return false;
     }
   },
   mutations: {
@@ -57,82 +119,96 @@ export default new Vuex.Store({
       state.e1 = payload;
     },
     updateIncome: (state, payload) => {
-      state.invoice.income = payload;
+      state.my_invoice.income = payload;
     },
     updateNotIncome: (state, payload) => {
-      state.invoice.notIncome = payload;
+      state.my_invoice.notIncome = payload;
     },
     updateOtherIncome: (state, payload) => {
-      state.invoice.otherIncome = payload;
+      state.my_invoice.otherIncome = payload;
     },
     updatInvoiceFull: (state, payload) => {
-      state.invoice.invoiceFull = payload;
+      state.my_invoice.invoiceFull = payload;
     },
     updatInvoiceFullAmount: (state, payload) => {
-      state.invoice.invoiceFullAmount = payload;
+      state.my_invoice.invoiceFullAmount = payload;
     },
     updatInvoicePartial: (state, payload) => {
-      state.invoice.invoicePartial = payload;
+      state.my_invoice.invoicePartial = payload;
     },
     updatInvoicePartialAmount: (state, payload) => {
-      state.invoice.invoicePartialAmount = payload;
+      state.my_invoice.invoicePartialAmount = payload;
     },
     updateDialog: (state, payload) => {
       state.dialog = payload;
     },
+    updateInfoDialog: (state, payload) => {
+      state.infoDialog = payload;
+    },
     updateUpdatedialog: (state, payload) => {
       state.updateDialog = payload;
     },
-
+    updateLastInvoiceDoc: (state, payload) => {
+      state.lastInvoiceDoc = payload;
+    },
     clearFormData: state => {
       state.e1 = 1;
+      state.lastInvoiceDoc = "";
 
-      state.invoice.invoiceNumber = "";
-      state.invoice.customerId = "";
-      state.invoice.customerName = "";
-      state.invoice.invoiceSlip = "";
-      state.invoice.soNumber = "";
-      state.invoice.invoiceAmount = "";
+      state.my_invoice.invoiceNumber = "";
+      state.my_invoice.customerId = "";
+      state.my_invoice.customerName = "";
 
-      state.invoice.service = "";
-      state.invoice.sinceServiceYear = "";
-      state.invoice.sinceServiceMonth = "";
-      state.invoice.toServiceYear = "";
-      state.invoice.toServiceMonth = "";
+      state.my_invoice.income = true;
+      state.my_invoice.notIncome = false;
+      state.my_invoice.otherIncome = false;
+      state.my_invoice.invoiceOtherDescription = "";
+      state.my_invoice.invoiceFull = true;
+      state.my_invoice.invoicePartial = false;
+      state.my_invoice.invoiceDescription = "";
+      state.my_invoice.invoiceFullAmount = "";
+      state.my_invoice.invoicePartialAmount = "";
+      state.my_invoice.status = "";
 
-      state.invoice.income = true;
-      state.invoice.notIncome = false;
-      state.otherIncome = false;
-      state.invoice.invoiceOtherDescription = "";
-      state.invoice.invoiceFull = true;
-      state.invoice.invoicePartial = false;
-      state.invoice.invoiceDescription = "";
-      state.invoice.invoiceFullAmount = "";
-      state.invoice.invoicePartialAmount = "";
+      state.my_invoice.comment = "";
+      state.my_invoice.invoice = [
+        {
+          invoiceSlip: "",
+          soNumber: "",
+          invoiceAmount: "",
+          service: "",
+          startDate: "",
+          stopDate: ""
+        }
+      ];
     },
     updateInvoiceInfo: (state, payload) => {
-      state.invoice.invoiceNumber = payload.invoiceNumber;
-      state.invoice.customerId = payload.customerId;
-      state.invoice.customerName = payload.customerName;
-      state.invoice.invoiceSlip = payload.invoiceSlip;
-      state.invoice.soNumber = payload.soNumber;
-      state.invoice.invoiceAmount = payload.invoiceAmount;
+      state.lastInvoiceDoc = payload.invoiceDoc;
+      state.my_invoice.invoiceDoc = payload.invoiceDoc;
 
-      state.invoice.service = payload.service;
-      state.invoice.sinceServiceYear = payload.sinceServiceYear;
-      state.invoice.sinceServiceMonth = payload.sinceServiceMonth;
-      state.invoice.toServiceYear = payload.toServiceYear;
-      state.invoice.toServiceMonth = payload.toServiceMonth;
+      state.my_invoice.invoiceNumber = payload.invoiceNumber;
+      state.my_invoice.customerId = payload.customerId;
+      state.my_invoice.customerName = payload.customerName;
 
-      state.invoice.income = payload.income;
-      state.invoice.notIncome = payload.notIncome;
-      state.invoice.otherIncome = payload.otherIncome;
-      state.invoice.invoiceOtherDescription = payload.invoiceOtherDescription;
-      state.invoice.invoiceFull = payload.invoiceFull;
-      state.invoice.invoicePartial = payload.invoicePartial;
-      state.invoice.invoiceDescription = payload.invoiceDescription;
-      state.invoice.invoiceFullAmount = payload.invoiceFullAmount;
-      state.invoice.invoicePartialAmount = payload.invoicePartialAmount;
+      state.my_invoice.income = payload.income;
+      state.my_invoice.notIncome = payload.notIncome;
+      state.my_invoice.otherIncome = payload.otherIncome;
+      state.my_invoice.invoiceOtherDescription =
+        payload.invoiceOtherDescription;
+      state.my_invoice.invoiceFull = payload.invoiceFull;
+      state.my_invoice.invoicePartial = payload.invoicePartial;
+      state.my_invoice.invoiceDescription = payload.invoiceDescription;
+      state.my_invoice.invoiceFullAmount = payload.invoiceFullAmount;
+      state.my_invoice.invoicePartialAmount = payload.invoicePartialAmount;
+      state.my_invoice.status = payload.status;
+
+      state.my_invoice.comment = payload.comment;
+      state.my_invoice.invoice = payload.invoice;
+    },
+    updateProps: (state, payload) => {
+      console.log("store", payload);
+      console.log("store", state.my_invoice);
+      state.my_invoice.invoice = payload;
     }
   },
   actions: {
@@ -153,6 +229,9 @@ export default new Vuex.Store({
     },
     updatInvoicePartial: ({ commit }, payload) => {
       commit("updatInvoicePartial", payload);
+    },
+    addMyinvoice: ({ commit }, playload) => {
+      commit("addMyinvoice", playload);
     }
   }
 });

@@ -1,57 +1,61 @@
 <template>
-  <v-app>
-    <v-navigation-drawer app v-model="drawer" class="background">
+  <div>
+    <v-navigation-drawer app v-model="drawer" width="300" class="background pa-2">
       <v-layout row fill-height>
-        <v-card flat class="transparent" dark>
-          <v-list two-line>
-            <v-list-tile avatar>
-              <v-list-tile-content>
-                <v-list-tile-title>{{name}}</v-list-tile-title>
-              </v-list-tile-content>
-            </v-list-tile>
+        <v-card text class="transparent" dark>
+          <v-list two-line nav>
+            <v-list-item avatar>
+              <v-list-item-content>
+                <v-list-item-title>{{name}}</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
 
-            <v-list-tile v-for="(itemP,index) in itemsPerson" :key="index">
-              <v-list-tile-action>
+            <v-list-item v-for="(itemP,index) in itemsPerson" :key="index">
+              <v-list-item-action>
                 <v-icon color="white">{{itemP.icon}}</v-icon>
-              </v-list-tile-action>
+              </v-list-item-action>
 
-              <v-list-tile-content>
-                <v-list-tile-title>{{itemP.title}}</v-list-tile-title>
-                <v-list-tile-sub-title>{{itemP.subtitle}}</v-list-tile-sub-title>
-              </v-list-tile-content>
+              <v-list-item-content>
+                <v-list-item-title>{{itemP.title}}</v-list-item-title>
+                <v-list-item-subtitle>{{itemP.subtitle}}</v-list-item-subtitle>
+              </v-list-item-content>
 
-              <v-list-tile-action v-if="itemP.subicon">
+              <v-list-item-action>
                 <v-icon>{{itemP.subicon}}</v-icon>
-              </v-list-tile-action>
-            </v-list-tile>
+              </v-list-item-action>
+            </v-list-item>
+            <v-divider class="white"></v-divider>
             <v-list class="transparent">
-              <v-list-tile v-for="(itemM,index) in itemsMenu" :key="index" @click="itemM.method">
-                <v-list-tile-action>
+              <v-list-item v-for="(itemM,index) in itemsMenu" :key="index" @click="itemM.method">
+                <v-list-item-action>
                   <v-icon>{{itemM.icon}}</v-icon>
-                </v-list-tile-action>
-                <v-list-tile-title>{{itemM.title}}</v-list-tile-title>
-              </v-list-tile>
+                </v-list-item-action>
+                <v-list-item-title>{{itemM.title}}</v-list-item-title>
+              </v-list-item>
             </v-list>
           </v-list>
         </v-card>
       </v-layout>
     </v-navigation-drawer>
-    <v-toolbar app>
+    <v-app-bar app>
+      <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+      <div class="flex-grow-1"></div>
+    </v-app-bar>
+    <!-- <v-toolbar app>
       <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
-      <v-toolbar-title>Title</v-toolbar-title>
-    </v-toolbar>
+      <v-toolbar-title></v-toolbar-title>
+    </v-toolbar>-->
     <v-content>
       <v-container fluid>
-        <formtable></formtable>
+        <router-view></router-view>
       </v-container>
     </v-content>
-  </v-app>
+  </div>
 </template>
 
 <script>
-import FormTable from "../components/FormTable";
 import Swal from "sweetalert2";
-import { Encode, Decode } from "../services/";
+import { Decode } from "../services/";
 
 export default {
   data() {
@@ -68,13 +72,11 @@ export default {
       name: ""
     };
   },
-  components: {
-    formtable: FormTable
-  },
+
   methods: {
     logout() {
       this.$cookies.remove("user");
-      this.$router.push("/login");
+      this.$router.push("/");
     }
   },
   created() {
@@ -91,7 +93,6 @@ export default {
     });
 
     var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
-    console.log("jsonObjDashboard", obj);
     this.userId = obj.userid;
     this.name = `${obj.title} ${obj.name} ${obj.lastname}`;
 
@@ -103,7 +104,6 @@ export default {
       },
       {
         icon: "mdi-email",
-        subicon: "chat",
         title: `${obj.email}`,
         subtitle: "Email"
       },
@@ -125,5 +125,8 @@ export default {
   width: 100%;
   height: 33%;
   background-image: -webkit-linear-gradient(80deg, #96c93d, #00b09b);
+}
+>>> .v-divider {
+  border-bottom: 1px solid;
 }
 </style>

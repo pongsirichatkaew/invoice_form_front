@@ -4,9 +4,9 @@
       <v-layout row wrap class="ml-3 mr-3 pt-6">
         <v-flex xs12>
           <v-layout row wrap>
-            <v-flex xs12 lg9>
+            <v-flex xs9>
               <v-text-field
-                class="ml-9 pr-8"
+                class="ml-9"
                 v-model="search"
                 append-icon="mdi-magnify"
                 label="ค้นหาข้อมูล "
@@ -15,9 +15,9 @@
                 hide-details
               ></v-text-field>
             </v-flex>
-            <v-flex xs12 lg2>
+            <v-flex xs3>
               <v-btn
-                class="ml-9 mt-2"
+                class="ml-5 mt-2"
                 elevation="2"
                 large
                 outlined
@@ -29,7 +29,7 @@
               </v-btn>
             </v-flex>
 
-            <v-flex v-if="advancedSearch" xs12 lg3 class="pl-8 pt-6 pr-8">
+            <v-flex v-if="advancedSearch" xs3 class="pl-8 pt-6">
               <v-menu
                 ref="menuStart"
                 v-model="menuStart"
@@ -56,7 +56,7 @@
                 </v-date-picker>
               </v-menu>
             </v-flex>
-            <v-flex v-if="advancedSearch" xs12 lg3 class="pl-8 pt-6 pr-8">
+            <v-flex v-if="advancedSearch" xs3 class="pl-8 pt-6">
               <v-menu
                 ref="menuStop"
                 v-model="menuStop"
@@ -83,10 +83,10 @@
                 </v-date-picker>
               </v-menu>
             </v-flex>
-            <v-flex v-if="advancedSearch" xs12 lg3 class="pl-8 pt-6 pr-8">
+            <v-flex v-if="advancedSearch" xs3 class="pl-8 pt-6">
               <v-select v-model="select" :items="status" label="เลือกสถานะ" outlined></v-select>
             </v-flex>
-            <v-flex v-if="advancedSearch" xs12 lg3 class="pl-8 pt-6 pr-8">
+            <v-flex v-if="advancedSearch" xs3 class="pl-8 pt-6 pr-8">
               <v-select
                 v-model="selectIncome"
                 :items="incomeList"
@@ -116,32 +116,18 @@
           <v-chip :class="`ma-2 white--text approved ${item.status}`">{{item.status}}</v-chip>
       </template>-->
       <template v-slot:item.action="{ item }">
-        <!-- <v-btn
-          v-if="item.status !== 'รอส่งคืนเอกสาร' && item.status !== 'คืนเอกสารเรียบร้อยแล้ว' "
+        <v-btn
           elevation="6"
           class="btn-document white--text"
           width="180"
           :color="item.receiveDocumentStatus"
           :disabled="item.receiveDocumentDisabled"
           @click="openConfirmForm(item)"
-        >{{item.receiveDocument}}</v-btn>-->
-        <v-chip
-          class="ma-2 white--text"
-          :color="item.colorShip"
-          @click="openTakeForm(item)"
-        >{{item.status}}</v-chip>
+        >{{item.receiveDocument}}</v-btn>
       </template>
       <template v-slot:item.edit="{ item }">
         <v-icon small @click="openInfoDialog(item)">mdi-file-document</v-icon>
       </template>
-      <!-- <template v-slot:item.take="{ item }">
-        <v-chip
-          v-if="item.status === 'รอส่งคืนเอกสาร' || item.status === 'คืนเอกสารเรียบร้อยแล้ว'"
-          class="ma-2 white--text"
-          :color="item.colorShip"
-          @click="openTakeForm(item)"
-        >{{item.status}}</v-chip>
-      </template>-->
     </v-data-table>
     <v-dialog v-model="confirmDialog" persistent max-width="600px">
       <v-card>
@@ -176,40 +162,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="takeDialog" persistent max-width="600px">
-      <v-card>
-        <v-toolbar text>
-          <v-toolbar-title>ยืนยันการส่งคืนเอกสาร</v-toolbar-title>
-        </v-toolbar>
-        <v-card-text>
-          <v-container grid-list-md>
-            <v-layout wrap>
-              <v-flex xs12 sm12 md12>
-                <p>เลขที่เอกสาร: {{confirmInvoiceNumber}}</p>
-              </v-flex>
-              <v-flex xs12>
-                <p>รหัสพนักงาน: {{userId}}</p>
-              </v-flex>
-              <v-flex xs12 v-if="reasonTake !== ''">
-                <p>เหตุผล: {{reasonTake}}</p>
-              </v-flex>
-              <v-flex xs12 sm12 md12>
-                <v-text-field label="รหัสพนักงานของผู้คืนเอกสาร*" required v-model="userIdTakeFrom"></v-text-field>
-              </v-flex>
-              <v-flex xs12 sm12 md12>
-                <v-text-field label="รหัสพนักงานของผู้รับเอกสาร*" required v-model="userIdConfirm"></v-text-field>
-              </v-flex>
-            </v-layout>
-          </v-container>
-          <small>*indicates required field</small>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="takeDialog = false">ปิด</v-btn>
-          <v-btn class="success" text @click="takeForm()" :disabled="checkEmployeeId">บันทึก</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+
     <v-dialog
       v-model="infoDialog"
       fullscreen
@@ -323,49 +276,6 @@
         <v-card-text style="height: 30px; position: relative"></v-card-text>
       </v-card>
     </v-dialog>
-
-    <v-dialog v-model="dialogReasons" persistent max-width="500">
-      <v-card>
-        <v-app-bar flat color="primary">
-          <v-toolbar-title style="color:white">หมายเหตุ</v-toolbar-title>
-        </v-app-bar>
-        <v-container>
-          <v-layout row wrap>
-            <v-container grid-list-xs>
-              <v-flex xs12 v-if="employee_take_from_name.length > 0">
-                <p>ชื่อผู้คืนเอกสาร: {{employee_take_from_name}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
-
-              <v-flex xs12 v-if="employee_take_from_code.length > 0">
-                <p>รหัสพนักงานของผู้คืนเอกสาร: {{employee_take_from_code}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
-
-              <v-flex xs12 v-if="employee_take_by_name.length > 0">
-                <p>ชื่อผู้รับเอกสาร: {{employee_take_by_name}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
-
-              <v-flex xs12 v-if="employee_take_by_code.length > 0">
-                <p>รหัสพนักงานของผู้รับคืนเอกสาร: {{employee_take_by_code}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
-
-              <v-flex xs12 v-if="employee_take_at.length > 0">
-                <p>เวลา: {{employee_take_at}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
-            </v-container>
-          </v-layout>
-        </v-container>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" text @click.native="dialogReasons = false">ปิด</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -373,7 +283,7 @@
 import Form1Info from "./Form1Info";
 import Form2Info from "./Form2Info";
 import { mapState } from "vuex";
-import { Encode, Decode } from "../services/";
+import { Decode } from "../services/";
 
 import Swal from "sweetalert2";
 
@@ -415,7 +325,6 @@ export default {
           sortable: false
         },
         { text: "เอกสาร", value: "edit", sortable: false, align: "center" }
-        // { text: "การส่งคืน", value: "take", sortable: false, align: "center" }
       ],
       items: [],
       itemsCopy: [],
@@ -450,7 +359,6 @@ export default {
       showBtnReject: false,
       isCommentApprove: false,
       userIdConfirm: "",
-      userIdTakeFrom: "",
       employee: {},
       startDate: "",
       stoptDate: "",
@@ -460,17 +368,7 @@ export default {
       advancedSearch: false,
       overlay: false,
       min_date: "",
-      max_date: "",
-      takeDialog: false,
-      reasonTake: "",
-      dialogReasons: false,
-      employee_take_by_name: "",
-      employee_take_by: {},
-      employee_take_by_code: "",
-      employee_take_at: "",
-      employee_take_from_name: "",
-      employee_take_from: {},
-      employee_take_from_code: ""
+      max_date: ""
     };
   },
   components: {
@@ -569,20 +467,19 @@ export default {
     },
     openInfoDialog(item) {
       this.infoDialog = true;
-      // this.$cookies.remove("item");
-      // this.$cookies.set("item", item);
-      localStorage.removeItem("item");
-
-      console.log("info", item);
-
-      localStorage.setItem("item", Encode.encode(JSON.stringify(item)));
+      this.$cookies.remove("item");
+      console.log("item", item);
+      this.$cookies.set("item", item);
       this.$store.commit("updateInvoiceInfo", item);
-      if (this.my_invoice.status === "รออนุมัติ") {
-        this.showBtnReject = true;
-        this.showBtnAprrove = true;
-      } else {
+      if (this.my_invoice.status === "ไม่อนุมัติ") {
         this.showBtnReject = false;
         this.showBtnAprrove = false;
+      } else if (this.my_invoice.status === "อนุมัติ") {
+        this.showBtnReject = false;
+        this.showBtnAprrove = false;
+      } else {
+        this.showBtnReject = true;
+        this.showBtnAprrove = true;
       }
       this.employee = item.employee;
     },
@@ -790,7 +687,6 @@ export default {
             arr.invoiceAmount = arr.amount_no_vat;
           });
           var createAt = moment(form.create_at).locale("th");
-          var takeAt = moment(form.take_at).locale("th");
 
           var isIncome = "อื่นๆ";
           if (form.change_income === 1 && form.full === 1) {
@@ -800,18 +696,6 @@ export default {
           } else if (form.not_change_income === 1) {
             isIncome = "ไม่เปลี่ยนแปลงรายได้";
           }
-
-          let color = "orange";
-          if (form.status === "อนุมัติ") {
-            color = "green";
-          } else if (form.status === "ไม่อนุมัติ") {
-            color = "red";
-          } else if (form.status === "รอส่งคืนเอกสาร") {
-            color = "amber darken-1";
-          } else if (form.status === "คืนเอกสารเรียบร้อยแล้ว") {
-            color = "green";
-          }
-
           let f = {
             index: index++,
             invoiceDoc: form.id_document,
@@ -820,25 +704,12 @@ export default {
             customerName: form.customer_name,
             employee: form.employee,
             employee_approved: form.employee_approved,
-            employee_take_by: form.employee_take_by,
-            employee_take_from: form.employee_take_from,
-            take_at: takeAt.format("L") + " " + takeAt.format("LT"),
             isIncome: isIncome,
             invoice: form.invoice,
             income: form.change_income === 1 ? true : false,
-            invoiceFull:
-              form.change_income === 1
-                ? form.full === 1
-                  ? true
-                  : false
-                : false,
+            invoiceFull: form.full === 1 ? true : false,
             invoiceFullAmount: form.full_text,
-            invoicePartial:
-              form.change_income === 1
-                ? form.some === 1
-                  ? true
-                  : false
-                : false,
+            invoicePartial: form.some === 1 ? true : false,
             invoicePartialAmount: form.some_text,
             notIncome: form.not_change_income === 1 ? true : false,
             otherIncome: form.other === 1 ? true : false,
@@ -850,8 +721,7 @@ export default {
             status: form.status,
             receiveDocument: receiveDocument,
             receiveDocumentDisabled: receiveDocumentDisabled,
-            receiveDocumentStatus: receiveDocumentStatus,
-            colorShip: color
+            receiveDocumentStatus: receiveDocumentStatus
           };
           console.log("f", f);
           console.log(this.incomeList);
@@ -909,61 +779,6 @@ export default {
           timer: 1500
         });
         this.confirmDialog = false;
-        this.getAllInvoiceForm();
-      } catch (error) {
-        if (error.response) {
-          this.colorSnackbar = "red";
-          this.textSnackbar = error.response.data;
-          this.snackbar = true;
-        }
-      }
-    },
-    openTakeForm(form) {
-      if (form.receiveDocumentStatus == "success") {
-        console.log("form", form);
-        this.employee = form.employee;
-        this.confirmInvoiceNumber = form.invoiceDoc;
-        this.userIdConfirm = "";
-        this.confirmDialog = true;
-      } else if (form.status === "รอส่งคืนเอกสาร") {
-        this.takeDialog = true;
-        this.employee = form.employee;
-        this.confirmInvoiceNumber = form.invoiceDoc;
-        this.userIdConfirm = "";
-        this.userIdTakeFrom = "";
-        this.reasonTake = form.comment;
-      } else if (form.status === "รออนุมัติ" || form.status === "ไม่อนุมัติ") {
-      } else {
-        this.dialogReasons = true;
-        this.employee_take_by_code = form.employee_take_by.code;
-        this.employee_take_by_name = `${form.employee_take_by.thainame} ${form.employee_take_by.thlastname}`;
-        this.employee_take_at = form.take_at;
-
-        if (typeof form.employee_take_from !== "undefined") {
-          this.employee_take_from_code = form.employee_take_from.code;
-          this.employee_take_from_name = `${form.employee_take_from.thainame} ${form.employee_take_from.thlastname}`;
-        }
-        console.log(form.employee_take_from);
-      }
-    },
-    async takeForm() {
-      try {
-        console.log("inv", this.confirmInvoiceNumber);
-        console.log("idon", this.userIdConfirm);
-        console.log("code", this.employee.code);
-        let result = await this.axios.post(process.env.VUE_APP_API + `/take`, {
-          id_user: this.employee.code,
-          id_from: this.confirmInvoiceNumber,
-          password: this.userIdConfirm,
-          take_from: this.userIdTakeFrom
-        });
-        Swal.fire({
-          type: "success",
-          title: "ส่งคืนเอกสารเรียบร้อยแล้ว",
-          showConfirmButton: false,
-          timer: 1500
-        });
-        this.takeDialog = false;
         this.getAllInvoiceForm();
       } catch (error) {
         if (error.response) {

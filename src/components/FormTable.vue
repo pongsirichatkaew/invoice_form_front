@@ -1,39 +1,137 @@
 <template>
-  <v-app>
-    <v-card-text>
-      <v-toolbar flat color="white">
-        <v-toolbar-title>ตารางอนุมัติหนี้</v-toolbar-title>
-        <v-spacer></v-spacer>
-        <v-text-field v-model="search" append-icon="search" label="Search" single-line hide-details></v-text-field>
-        <v-btn outline class="buttonInsert" @click="getDialog">Insert</v-btn>
-      </v-toolbar>
-      <v-snackbar v-model="snackbar" :color="colorSnackbar" right top>
-        {{ textSnackbar }}
-        <v-btn color="white" flat @click="snackbar = false">Close</v-btn>
-      </v-snackbar>
-      <v-data-table
-        :headers="headers"
-        :items="items"
-        :search="search"
-        class="elevation-1"
-        :loading="isLoadingAll"
-        :pagination.sync="pagination"
-      >
-        <template v-slot:items="props">
-          <td>{{ props.item.id }}</td>
-          <td>{{ props.item.invoiceNumber }}</td>
-          <td>{{ props.item.service }}</td>
-          <td>{{ props.item.last_created }}</td>
-          <td>{{ props.item.status }}</td>
-          <td class="text-xs-center">
-            <v-icon small @click="openInfoDialog(props.item)">mdi-file-document</v-icon>
-          </td>
-          <td class="justify-center layout px-0">
-            <v-icon small class="mr-2" @click="getUpdateDialog(props.item)">edit</v-icon>
-          </td>
-        </template>
-      </v-data-table>
-    </v-card-text>
+  <div>
+    <v-card color="white">
+      <v-layout row wrap class="ml-3 mr-3 pt-6 pb-6">
+        <v-flex xs12>
+          <v-layout row wrap>
+            <v-flex xs12 lg9>
+              <v-text-field
+                class="ml-9 pr-8"
+                v-model="search"
+                append-icon="mdi-magnify"
+                label="ค้นหาข้อมูล "
+                placeholder="ลำดับ เลขที่เอกสาร เลขที่ใบลดหนี้ รหัสลูกค้า ชื่อลูกค้า "
+                outlined
+                hide-details
+              ></v-text-field>
+            </v-flex>
+            <v-flex xs9 lg2>
+              <v-btn
+                class="ml-9 mt-2"
+                elevation="2"
+                large
+                outlined
+                color="green"
+                @click="advancedSearchClick"
+              >
+                Advanced Searching
+                <!-- <v-icon right>mdi-arrow-down</v-icon> -->
+              </v-btn>
+            </v-flex>
+            <v-flex xs2 lg1>
+              <v-btn class="mt-3 primary" elevation="4" @click="getDialog">เพิ่มรายการ</v-btn>
+            </v-flex>
+
+            <v-flex v-if="advancedSearch" xs12 lg3 class="pl-8 pt-6 pr-8">
+              <v-menu
+                ref="menuStart"
+                v-model="menuStart"
+                :close-on-content-click="false"
+                :return-value.sync="startDate"
+                transition="scale-transition"
+                offset-y
+                full-width
+                min-width="100px"
+              >
+                <template v-slot:activator="{ on }">
+                  <v-text-field
+                    class="d-flex"
+                    outlined
+                    v-model="startDate"
+                    label="ตั้งแต่วันที่"
+                    append-icon="mdi-calendar-blank"
+                    readonly
+                    v-on="on"
+                  ></v-text-field>
+                </template>
+                <v-date-picker :max="max_date" v-model="startDate" no-title scrollable>
+                  <div class="flex-grow-1"></div>
+                </v-date-picker>
+              </v-menu>
+            </v-flex>
+            <v-flex v-if="advancedSearch" xs12 lg3 class="pl-8 pt-6 pr-8">
+              <v-menu
+                ref="menuStop"
+                v-model="menuStop"
+                :close-on-content-click="false"
+                :return-value.sync="stoptDate"
+                transition="scale-transition"
+                offset-y
+                full-width
+                min-width="100px"
+              >
+                <template v-slot:activator="{ on }">
+                  <v-text-field
+                    class="d-flex"
+                    outlined
+                    v-model="stoptDate"
+                    label="ถึงวันที่"
+                    append-icon="mdi-calendar-blank"
+                    readonly
+                    v-on="on"
+                  ></v-text-field>
+                </template>
+                <v-date-picker :min="min_date" v-model="stoptDate" no-title scrollable>
+                  <div class="flex-grow-1"></div>
+                </v-date-picker>
+              </v-menu>
+            </v-flex>
+            <v-flex v-if="advancedSearch" xs12 lg3 class="pl-8 pt-6 pr-8">
+              <v-select v-model="select" :items="status" label="เลือกสถานะ" outlined></v-select>
+            </v-flex>
+            <v-flex v-if="advancedSearch" xs12 lg3 class="pl-8 pt-6 pr-8">
+              <v-select
+                v-model="selectIncome"
+                :items="incomeList"
+                label="เลือกกรณีเปลี่ยนแปลงรายได้"
+                outlined
+              ></v-select>
+            </v-flex>
+          </v-layout>
+        </v-flex>
+      </v-layout>
+      <v-spacer></v-spacer>
+    </v-card>
+    <v-snackbar v-model="snackbar" :color="colorSnackbar" right top>
+      {{ textSnackbar }}
+      <v-btn color="white" text @click="snackbar = false">Close</v-btn>
+    </v-snackbar>
+    <v-data-table
+      :headers="headers"
+      :search="search"
+      class="elevation-1"
+      :loading="isLoadingAll"
+      :items-per-page="itemsPerPage"
+      :items="items"
+    >
+      <template v-slot:item.status="{ item }">
+        <v-chip
+          class="ma-2 white--text"
+          :color="item.colorShip"
+          @click="psReasons(item)"
+        >{{item.status}}</v-chip>
+      </template>
+      <template v-slot:item.action="{ item }">
+        <v-icon
+          small
+          @click="openInfoDialog(item)"
+          v-if="item.status === 'อนุมัติ'"
+        >mdi-file-document</v-icon>
+      </template>
+      <template v-slot:item.edit="{ item }">
+        <v-icon v-if="item.status === 'ไม่อนุมัติ'" small @click="getUpdateDialog(item)">mdi-pencil</v-icon>
+      </template>
+    </v-data-table>
 
     <v-dialog
       v-model="dialog"
@@ -46,39 +144,57 @@
         <v-stepper v-model="e1">
           <v-stepper-header>
             <v-stepper-step :complete="e1 > 1" step="1">
-              <span class="white--text">Name of step1</span>
+              <span class="white--text">สำหรับผู้ออกเอกสาร</span>
             </v-stepper-step>
 
             <v-divider></v-divider>
 
             <v-stepper-step :complete="e1 > 2" step="2">
-              <span class="white--text">Name of step1</span>
+              <span class="white--text">แบบฟอร์มขออนุมัติลดหนี้</span>
             </v-stepper-step>
 
             <v-divider></v-divider>
 
             <v-stepper-step step="3">
-              <span class="white--text">Name of step1</span>
+              <span class="white--text">ตรวจสอบข้อมูลเอกสาร</span>
             </v-stepper-step>
             <v-btn icon dark @click="closeDialog">
-              <v-icon>close</v-icon>
+              <v-icon>mdi-close</v-icon>
             </v-btn>
           </v-stepper-header>
 
           <v-stepper-items>
             <v-stepper-content step="1">
-              <firstForm></firstForm>
+              <firstForm ref="first"></firstForm>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" @click="checkForm1Valid">ต่อไป</v-btn>
+              </v-card-actions>
             </v-stepper-content>
 
             <v-stepper-content step="2">
-              <secondForm></secondForm>
+              <secondForm ref="second"></secondForm>
+              <v-card-actions>
+                <v-btn outlined text @click="e1=1" v-if="e1==2">ย้อนกลับ</v-btn>
+                <v-spacer></v-spacer>
+                <v-btn
+                  color="primary"
+                  @click="checkForm2Valid"
+                  :disabled="disabledBtn"
+                  v-if="e1==2"
+                >ต่อไป</v-btn>
+              </v-card-actions>
             </v-stepper-content>
 
             <v-stepper-content step="3">
               <firstForm></firstForm>
               <secondForm></secondForm>
-              <v-btn color="primary" @click="addinvoiceDoc">Continue</v-btn>
-              <v-btn flat @click="e1 =2 ">Cancel</v-btn>
+              <v-card-actions>
+                <v-btn text @click="e1 =2 ">ย้อนกลับ</v-btn>
+
+                <v-spacer></v-spacer>
+                <v-btn color="primary" @click="addinvoiceDoc">เพิ่มรายการ</v-btn>
+              </v-card-actions>
             </v-stepper-content>
           </v-stepper-items>
         </v-stepper>
@@ -95,22 +211,27 @@
       <v-card>
         <v-toolbar>
           <v-spacer></v-spacer>
-          <v-toolbar-items class="hidden-sm-and-down">
-            <v-btn icon large @click="closeInfoDialog">
-              <v-icon dark>close</v-icon>
-            </v-btn>
-          </v-toolbar-items>
+
+          <v-btn icon large @click="closeInfoDialog">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
         </v-toolbar>
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn class="btn-pdf" color="info" large dark v-on="on" @click="savePdf()">
-              <v-icon left>mdi-file</v-icon>ดูเอกสาร
-            </v-btn>
-          </template>
-          <span>ดูเอกสาร</span>
-        </v-tooltip>
+
         <infoForm1></infoForm1>
         <infoForm2></infoForm2>
+        <v-container>
+          <v-card flat>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+
+              <v-btn color="info" large dark @click="createPdf()">
+                <v-icon left>mdi-file</v-icon>ดูเอกสาร
+              </v-btn>
+
+              <v-spacer></v-spacer>
+            </v-card-actions>
+          </v-card>
+        </v-container>
       </v-card>
     </v-dialog>
 
@@ -124,53 +245,146 @@
       <v-card>
         <v-stepper v-model="e1">
           <v-stepper-header>
-            <v-stepper-step :complete="e1 > 1" step="1">Name of step 1</v-stepper-step>
+            <v-stepper-step :complete="e1 > 1" step="1">
+              <span class="white--text">สำหรับผู้ออกเอกสาร</span>
+            </v-stepper-step>
 
             <v-divider></v-divider>
 
-            <v-stepper-step :complete="e1 > 2" step="2">Name of step 2</v-stepper-step>
+            <v-stepper-step :complete="e1 > 2" step="2">
+              <span class="white--text">แบบฟอร์มขออนุมัติลดหนี้</span>
+            </v-stepper-step>
 
             <v-divider></v-divider>
 
-            <v-stepper-step step="3">Name of step 3</v-stepper-step>
+            <v-stepper-step step="3">
+              <span class="white--text">ตรวจสอบข้อมูลเอกสาร</span>
+            </v-stepper-step>
             <v-btn icon dark @click="closeUpdateDialog">
-              <v-icon>close</v-icon>
+              <v-icon>mdi-close</v-icon>
             </v-btn>
           </v-stepper-header>
 
           <v-stepper-items>
             <v-stepper-content step="1">
-              <firstForm></firstForm>
+              <firstForm ref="first"></firstForm>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" @click="checkForm1Valid">ต่อไป</v-btn>
+              </v-card-actions>
             </v-stepper-content>
 
             <v-stepper-content step="2">
-              <secondForm></secondForm>
+              <secondForm ref="second"></secondForm>
+              <v-card-actions>
+                <v-btn outlined text @click="e1=1" v-if="e1==2">ย้อนกลับ</v-btn>
+                <v-spacer></v-spacer>
+                <v-btn
+                  color="primary"
+                  @click="checkForm2Valid"
+                  :disabled="disabledBtn"
+                  v-if="e1==2"
+                >ต่อไป</v-btn>
+              </v-card-actions>
             </v-stepper-content>
 
             <v-stepper-content step="3">
               <firstForm></firstForm>
               <secondForm></secondForm>
-              <v-btn color="primary" @click="updateInvoice">Continue</v-btn>
-              <v-btn flat @click="e1 =2 ">Cancel</v-btn>
+              <v-card-actions>
+                <v-btn text @click="e1 =2 ">ย้อนกลับ</v-btn>
+
+                <v-spacer></v-spacer>
+                <v-btn color="primary" @click="updateInvoice">อัพเดทข้อมูล</v-btn>
+              </v-card-actions>
             </v-stepper-content>
           </v-stepper-items>
         </v-stepper>
       </v-card>
     </v-dialog>
-  </v-app>
+
+    <v-dialog v-model="dialogReasons" persistent max-width="500">
+      <v-card>
+        <v-app-bar flat color="primary">
+          <v-toolbar-title style="color:white">หมายเหตุ</v-toolbar-title>
+        </v-app-bar>
+        <v-container>
+          <v-layout row wrap>
+            <v-container grid-list-xs>
+              <v-flex xs12>
+                <p>ชื่อผู้อนุมัติ: {{employee_approved_name}}</p>
+                <!-- <v-text-field
+                  v-model="employee_approved_name"
+                  label="ชื่อผู้อนุมัติ"
+                  outlined
+                  disabled
+                  required
+                ></v-text-field>-->
+              </v-flex>
+
+              <v-flex xs12>
+                <p>รหัสพนักงานผู้อนุมัติ: {{employee_approved.code}}</p>
+                <!-- <v-text-field
+                  v-model="employee_approved.code"
+                  label="รหัสพนักงานผู้อนุมัติ"
+                  outlined
+                  disabled
+                  required
+                ></v-text-field>-->
+              </v-flex>
+              <v-flex xs12 v-if="comment.length > 0">
+                <p>เหตุผล: {{comment}}</p>
+                <!-- <v-text-field
+                  v-model="employee_approved.code"
+                  label="รหัสพนักงานผู้อนุมัติ"
+                  outlined
+                  disabled
+                  required
+                ></v-text-field>-->
+              </v-flex>
+              <v-flex xs12 v-if="employee_take_from_name.length > 0">
+                <p>ชื่อผู้คืนเอกสาร: {{employee_take_from_name}}</p>
+                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
+              </v-flex>
+
+              <v-flex xs12 v-if="employee_take_from_code.length > 0">
+                <p>รหัสพนักงานของผู้คืนเอกสาร: {{employee_take_from_code}}</p>
+                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
+              </v-flex>
+
+              <v-flex xs12 v-if="employee_take_by_name.length > 0">
+                <p>ชื่อผู้รับเอกสาร: {{employee_take_by_name}}</p>
+                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
+              </v-flex>
+
+              <v-flex xs12 v-if="employee_take_by_code.length > 0">
+                <p>รหัสพนักงานผู้รับ: {{employee_take_by_code}}</p>
+                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
+              </v-flex>
+
+              <v-flex xs12 v-if="employee_take_at.length > 0">
+                <p>เวลา: {{employee_take_at}}</p>
+                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
+              </v-flex>
+            </v-container>
+          </v-layout>
+        </v-container>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click.native="dialogReasons = false">ปิด</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <script>
-import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
-import pdfMake2 from "pdfmake-unicode";
-
 import Form1 from "./Form1";
 import Form2 from "./Form2";
 
 import Form1Info from "./Form1Info";
 import Form2Info from "./Form2Info";
-import InfoForm from "./InfoForm";
 import { mapState } from "vuex";
 import { Encode, Decode } from "../services/";
 import Swal from "sweetalert2";
@@ -178,6 +392,8 @@ import Swal from "sweetalert2";
 export default {
   data() {
     return {
+      itemsPerPage: 25,
+
       rowsPerPageItems: [10, 20, 30, 40],
       pagination: {
         rowsPerPage: 25
@@ -186,38 +402,29 @@ export default {
         {
           text: "ลำดับ",
           align: "left",
-          value: "id"
+          value: "index"
         },
         {
-          text: "เลขเอกสาร",
-          value: "invoiceNumber",
+          text: "เลขที่เอกสาร",
+          value: "invoiceDoc",
           align: "left"
         },
-        { text: "บริการที่ใช้งาน", value: "service" },
-        { text: "วันที่แก้ไขล่าสุด", value: "last_created" },
-        { text: "สถานะ", value: "status" },
-        { text: "เอกสาร", value: "", sortable: false, align: "center" },
+        { text: "เลขที่ใบลดหนี้", value: "invoiceNumber" },
+        { text: "ชื่อลูกค้า", value: "customerName" },
+        { text: "การเปลี่ยนแปลงรายได้", value: "isIncome" },
 
-        { text: "แก้ไขข้อมูล", value: "name", sortable: false, align: "center" }
+        { text: "วันที่แก้ไขล่าสุด", value: "last_created" },
+        { text: "สถานะ", value: "status", sortable: false, align: "center" },
+        { text: "เอกสาร", value: "action", sortable: false, align: "center" },
+
+        { text: "แก้ไขข้อมูล", value: "edit", sortable: false, align: "center" }
       ],
-      items: [
-        {
-          id: 1,
-          invoiceNumber: "123",
-          customerId: "123",
-          customerName: "444",
-          invoiceSlip: "5555",
-          soNumber: "666",
-          invoiceAmount: "7777",
-          service: "is a Sample",
-          sinceServiceYear: 2555,
-          sinceServiceMonth: "มกราคม",
-          toServiceYear: 2560,
-          toServiceMonth: "กุมภาพันธ์",
-          last_created: "1/1/2022",
-          status: ":)"
-        }
-      ],
+      items: [],
+      itemsCopy: [],
+      status: [],
+      incomeList: [],
+      select: "",
+      selectIncome: "",
       isLoadingAll: false,
       snackbar: false,
       textSnackbar: "Hello i am snackbar",
@@ -227,8 +434,32 @@ export default {
       sound: true,
       widgets: false,
       enabled: true,
-      infoDialog: false,
-      userId: ""
+      userId: "",
+      labelDropdown: "สถานะทั้งหมด",
+      labelIncome: "กรณีทั้งหมด",
+      dialogReasons: false,
+      comment: "",
+      approved_by: "",
+      employee: {},
+      employee_approved: {},
+      employee_approved_name: "",
+      employee_take_by_name: "",
+      employee_take_by: {},
+      employee_take_by_code: "",
+      employee_take_at: "",
+      disabledBtn: false,
+      startDate: "",
+      stoptDate: "",
+      menuStart: false,
+      menuStop: false,
+      searchCustomerName: "",
+      advancedSearch: false,
+      last_row: "",
+      min_date: "",
+      max_date: "",
+      employee_take_from_name: "",
+      employee_take_from: {},
+      employee_take_from_code: ""
     };
   },
   components: {
@@ -238,9 +469,17 @@ export default {
     infoForm2: Form2Info
   },
   computed: {
-    ...mapState(["dialog", "updateDialog", "invoice"]),
+    ...mapState([
+      "dialog",
+      "infoDialog",
+      "updateDialog",
+      "invoice",
+      "my_invoice",
+      "lastInvoiceDoc"
+    ]),
     e1: {
       get() {
+        console.log(this.$store.getters.e1);
         return this.$store.getters.e1;
       },
       set(value) {
@@ -249,106 +488,312 @@ export default {
     }
   },
   methods: {
+    checkForm1Valid() {
+      this.$refs.first.checkForm1Valid();
+    },
+    checkForm2Valid() {
+      this.$refs.second.checkForm2Valid();
+    },
+    advancedSearchClick() {
+      this.advancedSearch = !this.advancedSearch;
+    },
+    psReasons(item) {
+      if (item.status !== "รออนุมัติ") {
+        this.comment = "";
+        this.employee_approved = "";
+        this.employee_approved_name = "";
+        this.employee_take_by_code = "";
+        this.employee_take_by_name = "";
+        this.employee_take_at = "";
+
+        this.dialogReasons = true;
+        this.comment = item.comment;
+        this.employee_approved = item.employee_approved;
+        this.employee_approved_name = `${item.employee_approved.thainame} ${item.employee_approved.thlastname}`;
+        if (typeof item.employee_take_by !== "undefined") {
+          this.employee_take_by_code = item.employee_take_by.code;
+          this.employee_take_by_name = `${item.employee_take_by.thainame} ${item.employee_take_by.thlastname}`;
+          this.employee_take_at = item.take_at;
+        }
+        console.log(item.employee_take_from);
+        if (typeof item.employee_take_from !== "undefined") {
+          this.employee_take_from_code = item.employee_take_from.code;
+          this.employee_take_from_name = `${item.employee_take_from.thainame} ${item.employee_take_from.thlastname}`;
+        }
+      }
+    },
     getDialog() {
+      let year = new Date().getFullYear().toString();
+      let split_item = this.last_row.split("-");
+      if (year > split_item[0]) {
+        this.$store.commit("updateLastInvoiceDoc", year + "-" + "00001");
+      } else {
+        let last_number = parseInt(split_item[1], 10) + 1;
+        let str_number = last_number.toString();
+
+        for (let index = 0; index < 4; index++) {
+          if (str_number.length < 5) {
+            str_number = "0" + str_number;
+          }
+        }
+        console.log("aplsi", split_item[0] + "-" + str_number);
+        this.$store.commit(
+          "updateLastInvoiceDoc",
+          split_item[0] + "-" + str_number
+        );
+      }
+
       this.$store.commit("updateDialog", true);
     },
+
     getUpdateDialog(item) {
-      console.log("itemupdated", item);
       this.$store.commit("updateUpdatedialog", true);
+      console.log("update", item);
+
       this.$store.commit("updateInvoiceInfo", item);
+    },
+    checkItemSearch() {
+      let filterItems = this.items.filter(item => {
+        return (
+          item.index.toString().includes(this.search) ||
+          item.invoiceDoc.toString().includes(this.search) ||
+          item.invoiceNumber.toString().includes(this.search) ||
+          item.customerId.toString().includes(this.search) ||
+          item.customerName.includes(this.search)
+          // item.invoice ==
+          //   item.invoice.filter(inv => {
+          //     console.log("inv", inv);
+          //     return (
+          //       inv.ref_so.includes(this.search) ||
+          //       inv.service.includes(this.search) ||
+          //       inv.invoiceAmount.includes(this.search) ||
+          //       inv.invoiceSlip.includes(this.search)
+          //     );
+          //   })
+        );
+      });
+      this.items = filterItems;
+    },
+    checkItemDate() {
+      let start = Date.parse(this.startDate);
+      let stop = Date.parse(this.stoptDate);
+      if (this.startDate === "" && this.stoptDate !== "") {
+        let filterItem = this.items.filter(item => {
+          let itemDate = Date.parse(item.last_created);
+          let dateStop = new Date(stop).toISOString().split("T")[0];
+          let dateItem = new Date(itemDate).toISOString().split("T")[0];
+          console.log(dateItem, dateStop);
+          console.log(dateItem <= dateStop);
+          return dateItem <= dateStop;
+        });
+        this.items = filterItem;
+        console.log("filter", filterItem);
+      } else if (this.stoptDate === "" && this.startDate !== "") {
+        let filterItem = this.items.filter(item => {
+          let itemDate = Date.parse(item.last_created);
+          let dateStart = new Date(start).toISOString().split("T")[0];
+          let dateItem = new Date(itemDate).toISOString().split("T")[0];
+          console.log(dateItem, dateStart);
+          console.log("start", dateStart);
+
+          return dateItem >= dateStart;
+        });
+        this.items = filterItem;
+        console.log("filter", filterItem);
+      } else if (this.startDate !== "" && this.stoptDate !== "") {
+        let filterItem = this.items.filter(item => {
+          let itemDate = Date.parse(item.last_created);
+          let dateItem = new Date(itemDate).toISOString().split("T")[0];
+          let dateStart = new Date(start).toISOString().split("T")[0];
+          let dateStop = new Date(stop).toISOString().split("T")[0];
+          console.log("start", dateStart);
+          console.log("stop", dateStop);
+          console.log(dateStart, dateItem);
+          console.log(dateStop, dateItem);
+          return dateItem >= dateStart && dateItem <= dateStop;
+        });
+        this.items = filterItem;
+        console.log("filter", filterItem);
+      }
+    },
+    checkItemStatus() {
+      console.log("select", this.select);
+      if (this.select === this.labelDropdown) {
+        this.items = this.itemsCopy;
+      } else {
+        let filterItems = this.items.filter(
+          item => item.status === this.select
+        );
+        this.items = filterItems;
+        console.log("filter", filterItems);
+      }
+    },
+    checkItemIncome() {
+      console.log(this.selectIncome);
+      console.log(this.items);
+      if (this.selectIncome === "ลดหนี้เต็มจำนวน") {
+        let filterItems = this.items.filter(item => {
+          return item.invoiceFull && item.income;
+        });
+        this.items = filterItems;
+      } else if (this.selectIncome === "ลดหนี้บางส่วน") {
+        let filterItems = this.items.filter(item => {
+          return item.invoicePartial;
+        });
+        this.items = filterItems;
+      } else if (this.selectIncome === "ไม่เปลี่ยนแปลงรายได้") {
+        let filterItems = this.items.filter(item => {
+          return item.notIncome;
+        });
+        this.items = filterItems;
+      } else if (this.selectIncome === "อื่นๆ") {
+        let filterItems = this.items.filter(item => {
+          return item.otherIncome;
+        });
+        this.items = filterItems;
+      } else if (this.selectIncome === this.labelIncome) {
+        let filterItems = this.items.filter(item => {
+          return item;
+        });
+        this.items = filterItems;
+      }
+    },
+    selectStatus() {
+      this.items = this.itemsCopy;
+
+      if (this.select === this.labelDropdown) {
+        this.items = this.itemsCopy;
+      } else {
+        let filterItems = this.items.filter(
+          item => item.status === this.select
+        );
+        this.items = filterItems;
+      }
+      console.log(this.items);
     },
     async getAllForm() {
       try {
+        var moment = require("moment");
+
         this.isLoadingAll = true;
 
         this.items = [];
+        this.status.push(this.labelDropdown);
+        this.incomeList.push(this.labelIncome);
+
         let result = await this.axios.post(process.env.VUE_APP_API + `/menu`, {
           user_id: this.userId
         });
-        console.log(result);
         let index = 1;
+        console.log("result", result);
         result.data.forEach(form => {
-          console.log("form", form);
+          form.invoice.forEach(arr => {
+            arr.invoiceSlip = arr.invoice_no;
+            arr.soNumber = arr.ref_so;
+            arr.invoiceAmount = arr.amount_no_vat;
+          });
+          let color = "orange";
+          if (form.status === "อนุมัติ") {
+            color = "green";
+          } else if (form.status === "ไม่อนุมัติ") {
+            color = "red";
+          } else if (form.status === "รอส่งคืนเอกสาร") {
+            color = "amber darken-1";
+          } else if (form.status === "คืนเอกสารเรียบร้อยแล้ว") {
+            color = "green";
+          }
+
+          var createAt = moment(form.create_at).locale("th");
+          var takeAt = moment(form.take_at).locale("th");
+
+          var isIncome = "อื่นๆ";
+          if (form.change_income === 1 && form.full === 1) {
+            isIncome = "มีการเปลี่ยนแปลงรายได้(ลดหนี้ทั้งหมด)";
+          } else if (form.change_income === 1 && form.some === 1) {
+            isIncome = "มีการเปลี่ยนแปลงรายได้(ลดหนี้บางส่วน)";
+          } else if (form.not_change_income === 1) {
+            isIncome = "ไม่เปลี่ยนแปลงรายได้";
+          }
+
           let f = {
-            id: index++,
-            invoiceNumber: form.id_from,
+            index: index++,
+            invoiceDoc: form.id_document,
+            invoiceNumber: form.id_form,
             customerId: form.id_customer,
             customerName: form.customer_name,
-            invoiceSlip: form.invoice_no,
-            soNumber: form.ref_so,
-            invoiceAmount: form.amount_no_vat,
-            service: form.service,
-            sinceServiceYear: form.from_year,
-            sinceServiceMonth: form.from_month,
-            toServiceYear: form.to_year,
-            toServiceMonth: form.to_month,
-            income: form.change_income,
-            invoiceFull: form.full,
+            employee: form.employee,
+            employee_approved: form.employee_approved,
+            employee_take_by: form.employee_take_by,
+            employee_take_from: form.employee_take_from,
+            take_at: takeAt.format("L") + " " + takeAt.format("LT"),
+            isIncome: isIncome,
+            invoice: form.invoice,
+            income: form.change_income === 1 ? true : false,
+            invoiceFull: form.full === 1 ? true : false,
             invoiceFullAmount: form.full_text,
-            invoicePartial: form.some,
+            invoicePartial: form.some === 1 ? true : false,
             invoicePartialAmount: form.some_text,
-            notIncome: form.not_change_income,
-            otherIncome: form.other,
+            notIncome: form.not_change_income === 1 ? true : false,
+            otherIncome: form.other === 1 ? true : false,
             invoiceOtherDescription: form.other_text,
             invoiceDescription: form.debt_text,
-            last_created: form.create_at,
-            status: form.status
+            last_created: createAt.format("L") + " " + createAt.format("LT"), // 10 กันยายน 2019 เวลา 15:16,
+            last_row: form.last_row,
+            comment: form.comment,
+            approved_by: form.approved_by,
+            status: form.status,
+            colorShip: color
           };
+          this.last_row = form.last_row;
           this.items.push(f);
+          this.itemsCopy.push(f);
+          this.status.push(f.status);
         });
+        this.incomeList.push("ลดหนี้เต็มจำนวน");
+        this.incomeList.push("ลดหนี้บางส่วน");
+        this.incomeList.push("ไม่เปลี่ยนแปลงรายได้");
+        this.incomeList.push("อื่นๆ");
+        this.select = this.status[0];
+        this.selectIncome = this.incomeList[0];
+
         this.isLoadingAll = false;
       } catch (error) {
+        this.isLoadingAll = false;
+
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.result;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     async addinvoiceDoc() {
       try {
-        console.log(this.invoice);
+        console.log("my_invoice", this.my_invoice);
         let result = await this.axios.post(
           process.env.VUE_APP_API + `/create`,
           {
+            id_document: this.lastInvoiceDoc,
+            id_form: this.my_invoice.invoiceNumber,
+            id_customer: this.my_invoice.customerId,
+            customer_name: this.my_invoice.customerName,
+            change_income: this.my_invoice.income ? 1 : 0,
+
+            full: this.my_invoice.invoiceFull ? 1 : 0,
+            full_text: this.my_invoice.invoiceFullAmount,
+            some: this.my_invoice.invoicePartial ? 1 : 0,
+            some_text: this.my_invoice.invoicePartialAmount,
+            not_change_income: this.my_invoice.notIncome ? 1 : 0,
+            other: this.my_invoice.otherIncome ? 1 : 0,
+            other_text: this.my_invoice.invoiceOtherDescription,
+            debt_text: this.my_invoice.invoiceDescription,
             id_user: this.userId,
-            id_from: this.invoice.invoiceNumber,
             create_at: new Date(),
-            id_customer: this.invoice.customerId,
-            customer_name: this.invoice.customerName,
-            invoice_no: this.invoice.invoiceSlip,
-            ref_so: this.invoice.soNumber,
-            amount_no_vat: this.invoice.invoiceAmount,
 
-            service: this.invoice.service,
-            from_year: this.invoice.sinceServiceYear,
-            from_month: this.invoice.sinceServiceMonth,
-            to_year: this.invoice.toServiceYear,
-            to_month: this.invoice.toServiceMonth,
-
-            change_income: this.invoice.income ? 1 : 0,
-            full: this.invoice.invoiceFull ? 1 : 0,
-            full_text: this.invoice.invoiceFullAmount,
-
-            some: this.invoice.invoicePartial ? 1 : 0,
-            some_text: this.invoice.invoicePartialAmount,
-
-            not_change_income: this.invoice.notIncome ? 1 : 0,
-            other: this.invoice.otherIncome ? 1 : 0,
-            other_text: this.invoice.other_text,
-
-            debt_text: this.invoice.invoiceDescription
+            invoice: this.my_invoice.invoice
           }
         );
-        console.log(result);
+        console.log("result", result);
         this.getAllForm();
 
         Swal.fire({
@@ -357,83 +802,69 @@ export default {
           showConfirmButton: false,
           timer: 1500
         });
-
         this.$store.commit("clearFormData");
         this.$store.commit("updateDialog", false);
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.result;
+          console.log(error.response.data.result);
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     openInfoDialog(item) {
-      this.infoDialog = true;
+      localStorage.removeItem("item");
+
+      console.log("info", item);
+      // this.$cookies.remove("item");
+
+      // this.$cookies.set("item", item);
+      localStorage.setItem("item", Encode.encode(JSON.stringify(item)));
+
+      this.$store.commit("updateInfoDialog", true);
       this.$store.commit("updateInvoiceInfo", item);
-      console.log(item);
-      console.log("infoClicked", this.invoice);
+
+      this.employee = item.employee;
     },
     async updateInvoice() {
       try {
-        console.log(this.invoice);
         let result = await this.axios.post(process.env.VUE_APP_API + `/edit`, {
-          old_id_from: this.invoice.invoiceNumber,
+          id_document: this.lastInvoiceDoc,
+          id_form: this.my_invoice.invoiceNumber,
+          id_customer: this.my_invoice.customerId,
+          customer_name: this.my_invoice.customerName,
+          change_income: this.my_invoice.income ? 1 : 0,
+
+          full: this.my_invoice.invoiceFull ? 1 : 0,
+          full_text: this.my_invoice.invoiceFullAmount,
+          some: this.my_invoice.invoicePartial ? 1 : 0,
+          some_text: this.my_invoice.invoicePartialAmount,
+          not_change_income: this.my_invoice.notIncome ? 1 : 0,
+          other: this.my_invoice.otherIncome ? 1 : 0,
+          other_text: this.my_invoice.invoiceOtherDescription,
+          debt_text: this.my_invoice.invoiceDescription,
           id_user: this.userId,
-          id_from: this.invoice.invoiceNumber,
           create_at: new Date(),
-          id_customer: this.invoice.customerId,
-          customer_name: this.invoice.customerName,
-          invoice_no: this.invoice.invoiceSlip,
-          ref_so: this.invoice.soNumber,
-          amount_no_vat: this.invoice.invoiceAmount,
 
-          service: this.invoice.service,
-          from_year: this.invoice.sinceServiceYear,
-          from_month: this.invoice.sinceServiceMonth,
-          to_year: this.invoice.toServiceYear,
-          to_month: this.invoice.toServiceMonth,
-
-          change_income: this.invoice.income ? 1 : 0,
-          full: this.invoice.invoiceFull ? 1 : 0,
-          full_text: this.invoice.invoiceFullAmount,
-
-          some: this.invoice.invoicePartial ? 1 : 0,
-          some_text: this.invoice.invoicePartialAmount,
-
-          not_change_income: this.invoice.notIncome ? 1 : 0,
-          other: this.invoice.otherIncome ? 1 : 0,
-          other_text: this.invoice.other_text,
-
-          debt_text: this.invoice.invoiceDescription
+          invoice: this.my_invoice.invoice
         });
-        console.log(result);
-        // await this.savePdf();
+        Swal.fire({
+          type: "success",
+          title: "อัพเดทเรียบร้อยแล้ว",
+          showConfirmButton: false,
+          timer: 1500
+        });
+        console.log("result", result);
         this.getAllForm();
         this.$store.commit("clearFormData");
         this.$store.commit("updateUpdatedialog", false);
       } catch (error) {
         if (error.response) {
-          console.log(error.response.data);
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.result;
           this.snackbar = true;
-          console.log(error.response.status);
-          console.log(error.response.headers);
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          console.log("Error", error.message);
         }
-        console.log(error.config);
       }
     },
     closeDialog() {
@@ -441,554 +872,69 @@ export default {
       this.$store.commit("clearFormData");
     },
     closeInfoDialog() {
-      this.infoDialog = false;
+      this.$store.commit("updateInfoDialog", false);
       this.$store.commit("clearFormData");
     },
     closeUpdateDialog() {
       this.$store.commit("updateUpdatedialog", false);
       this.$store.commit("clearFormData");
     },
-    savePdf() {
-      let symbolIncome = this.invoice.income
-        ? "check_box"
-        : "check_box_outline_blank";
-      console.log("symbolIncome", symbolIncome);
-      let symbolNotIncome = this.invoice.notIncome
-        ? "check_box"
-        : "check_box_outline_blank";
-      console.log("symbolNotIncome", symbolNotIncome);
-
-      let symbolOtherIncome = this.invoice.otherIncome
-        ? "check_box"
-        : "check_box_outline_blank";
-      let symbolInvoiceFull = this.invoice.income
-        ? this.invoice.invoiceFull
-          ? "check_box"
-          : "check_box_outline_blank"
-        : "check_box_outline_blank";
-      let symbolInvoicePartial = this.invoice.income
-        ? this.invoice.invoicePartial
-          ? "check_box"
-          : "check_box_outline_blank"
-        : "check_box_outline_blank";
-
-      let invoiceFullAmount = this.invoice.invoiceFull
-        ? `${this.invoice.invoiceFullAmount}`
-        : "0";
-      let invoicePartialAmount = this.invoice.invoicePartial
-        ? `${this.invoice.invoicePartialAmount}`
-        : "0";
-
-      var dd = {
-        content: [
-          {
-            text: "แบบฟอร์มขออนุมัติลดหนี้  \n ",
-            style: "header"
-          },
-          {
-            style: "tableExample",
-            table: {
-              widths: ["*"],
-              body: [
-                [
-                  {
-                    text: "ส่วนที่ 1 สำหรับผู้ออกเอกสาร",
-                    style: "subheader"
-                  }
-                ],
-                [
-                  {
-                    alignment: "justify",
-                    columns: [
-                      {
-                        text: `\n\nรหัสลูกค้า: ${this.invoice.customerId}   ชื่อลูกค้า: ${this.invoice.customerName}\n อ้างอิง S/O เลขที่: ${this.invoice.soNumber}`,
-                        style: "headerLeft"
-                      },
-                      {
-                        text: `เลขที่ใบลดหนี้: ${this.invoice.invoiceNumber} \n\n เลขที่ใบแจ้งหนี้/เลขที่ใบเสร็จรับเงิน: ${this.invoice.invoiceSlip} \n จำนวนเงินตามใบแจ้งหนี้(ไม่รวมภาษีมูลค่าเพิ่ม): ${this.invoice.invoiceAmount} บาท`,
-                        style: "headerRight"
-                      }
-                    ]
-                  }
-                ]
-              ]
-            },
-            layout: {
-              fillColor: function(rowIndex, node, columnIndex) {
-                return rowIndex === 0 ? "#CCCCCC" : null;
-              }
-            }
-          },
-          {
-            style: "tableExample",
-            table: {
-              widths: ["*"],
-              body: [
-                [
-                  {
-                    text: "ขออนุมันติลดหนี้",
-                    style: "middleSubHeader"
-                  }
-                ]
-              ]
-            },
-            layout: {
-              fillColor: function(rowIndex, node, columnIndex) {
-                return rowIndex === 0 ? "#CCCCCC" : null;
-              }
-            }
-          },
-          {
-            style: "tableExample",
-            table: {
-              widths: ["*", "*"],
-              body: [
-                [
-                  {
-                    text: `บริการที่ใช้งาน: ${this.invoice.service}`,
-                    style: "headerLeft"
-                  },
-                  {
-                    text: `ตั้งแต่รอบบริการ พ.ศ.${this.invoice.sinceServiceYear} เดือน ${this.invoice.sinceServiceMonth} \n ถึงรอบบริการ พ.ศ.${this.invoice.toServiceYear} เดือน ${this.invoice.toServiceMonth}`,
-                    style: "headerLeft"
-                  }
-                ]
-              ]
-            }
-          },
-          {
-            style: "tableExample",
-            table: {
-              widths: ["*"],
-              body: [
-                [
-                  {
-                    columns: [
-                      {
-                        text: [
-                          { text: `${symbolIncome.trim()}`, style: "symbol1" },
-                          {
-                            text: [
-                              {
-                                text: "กรณีเปลี่ยนแปลงรายได้\n",
-                                style: "headerRight"
-                              },
-                              {
-                                text: `${symbolInvoiceFull}`,
-                                style: "symbol1"
-                              },
-                              {
-                                text: `ลดหนี้เต็มจำนวนจำนวน${invoiceFullAmount}บาท(ไม่รวม VAT)\n `,
-                                style: "headerLeft"
-                              },
-                              {
-                                text: `${symbolInvoicePartial}`,
-                                style: "symbol1"
-                              },
-                              {
-                                text: `ลดหนี้บางส่วนจำนวน${invoicePartialAmount}บาท(ไม่รวม VAT)`,
-                                style: "headerLeft"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        text: [
-                          {
-                            text: `${symbolNotIncome}`,
-                            style: "symbol1"
-                          },
-                          {
-                            text: " กรณีไม่เปลี่ยนแปลงรายได้ ",
-                            style: "headerRight"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              ]
-            }
-          },
-          {
-            style: "tableExample",
-            table: {
-              widths: ["*"],
-              body: [
-                [
-                  {
-                    text: [
-                      {
-                        text: `${symbolOtherIncome}`,
-                        style: "symbol1"
-                      },
-                      {
-                        text: `อื่นๆ: ${this.invoice.invoiceOtherDescription} \n`,
-                        style: "headerLeft"
-                      },
-                      {
-                        text: `สาเหตุการลดหนี้: ${this.invoice.invoiceDescription}`,
-                        style: "headerLeft"
-                      }
-                    ]
-                  }
-                ]
-              ]
-            }
-          },
-          {
-            style: "tableExample",
-            table: {
-              widths: ["*"],
-              body: [
-                [
-                  {
-                    text:
-                      "ส่วนที่ 2 สำหรับฝ่ายบริหารต้นทุน (ตรวจสอบต้นทุนที่เกิดขึ้นของบริการที่ขอลดหนี้)",
-                    style: "subheader"
-                  }
-                ],
-                [
-                  {
-                    columns: [
-                      {
-                        text: [
-                          { text: "check_box_outline_blank", style: "symbol1" },
-                          {
-                            text: [
-                              {
-                                text: " ต้นทุนบริการ \n \t",
-                                style: "headerRight"
-                              },
-                              {
-                                text: "check_box_outline_blank",
-                                style: "symbol1"
-                              },
-                              {
-                                text:
-                                  "มีค่าใช้จ่ายเกิดขึ้นแล้ว จำนวน .......... บาท(ไม่รวม VAT)\n\t",
-                                style: "headerRight"
-                              },
-                              {
-                                text:
-                                  "ค่าใช้จ่ายสำหรับบริการ .......... บาท(ไม่รวม VAT)\n",
-                                style: "headerRight"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        text: [
-                          {
-                            text: "\ncheck_box_outline_blank",
-                            style: "symbol1"
-                          },
-                          {
-                            text: " ยังไม่มีค่าใช้จ่ายเกิดขึ้น \n",
-                            style: "headerRight"
-                          },
-                          {
-                            text:
-                              "เนื่องจาก ................................................... ",
-                            style: "headerLeft"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              ]
-            },
-            layout: {
-              fillColor: function(rowIndex, node, columnIndex) {
-                return rowIndex === 0 ? "#CCCCCC" : null;
-              }
-            }
-          },
-          {
-            style: "tableExample",
-            table: {
-              widths: ["*"],
-              body: [
-                [
-                  {
-                    text: [
-                      {
-                        text: "check_box_outline_blank",
-                        style: "symbol1"
-                      },
-                      {
-                        text:
-                          " อื่นๆ น็อกคาวบอย คอลัมนิสต์ไบโอฮันนีมูน อพาร์ตเมนท์ เยอบีร่าเซี้ยวหยวนยาวี วอล์คเบอร์เกอร์แอปเปิลโฟล์ค กรีนโปรดักชั่นแซ็กมั้ย \n",
-                        style: "headerLeft"
-                      }
-                    ]
-                  }
-                ]
-              ]
-            }
-          },
-
-          {
-            style: "tableExample",
-            table: {
-              widths: ["*"],
-              body: [
-                [
-                  {
-                    text: "ส่วนที่ 3 สำหรับฝ่ายบัญชีและการเงิน",
-                    style: "subheader"
-                  }
-                ],
-                [
-                  {
-                    text:
-                      "\t \t \t ความคิดเห็น: ไบโออุรังคธาตุ รวมมิตร โอเวอร์ดัมพ์ช็อปเปอร์ช็อปปิ้งออดิทอเรียม แม็กกาซีนเซอร์วิสอุปสงค์คอร์สเพนกวิน ช็อคธรรมาวืดแผดเผา อาร์ติสต์ม้ง แอปพริคอทโบตั๋น รีสอร์ตบลูเบอร์รี่อิออน แฟลชราสเบอร์รีเที่ยงคืนเอสเปรสโซ ฮวงจุ้ยเชอร์รี่ฟิวเจอร์แคมเปญ เซาท์ปาสคาล ฟิวเจอร์อะไมค์เฟรชชี่รากหญ้า เอนทรานซ์ต่อรองท็อปบู๊ทอะแคป พาวเวอร์สปิริตเพนกวินคอปเตอร์ สตาร์เป่ายิ้งฉุบกรรมาชน อันเดอร์ไคลแม็กซ์มาร์เก็ตติ้ง \n",
-                    style: "headerLeft"
-                  }
-                ]
-              ]
-            },
-            layout: {
-              fillColor: function(rowIndex, node, columnIndex) {
-                return rowIndex === 0 ? "#CCCCCC" : null;
-              }
-            }
-          },
-          {
-            style: "tableExample",
-
-            table: {
-              widths: ["*"],
-              headerRows: 1,
-              body: [
-                [
-                  {
-                    text: "ส่วนที่ 4 สำหรับฝ่ายบริหารกรณีเปลี่ยนแปลงรายได้",
-                    style: "subheader"
-                  }
-                ]
-              ]
-            },
-            layout: {
-              fillColor: function(rowIndex, node, columnIndex) {
-                return rowIndex === 0 ? "#CCCCCC" : null;
-              }
-            }
-          },
-          {
-            style: "tableExample",
-            table: {
-              widths: ["*", "*"],
-              body: [
-                [
-                  {
-                    text: [
-                      {
-                        text: "ความเห็นฝ่ายบริหาร \n",
-                        style: "middleSubHeader"
-                      },
-                      {
-                        text: "check_box_outline_blank",
-                        style: "symbol1"
-                      },
-                      {
-                        text: " อนุมัติ \n",
-                        style: "headerLeft"
-                      },
-                      {
-                        text: "check_box_outline_blank",
-                        style: "symbol1"
-                      },
-                      {
-                        text: " ขอข้อมูลเพิ่มเติมเรื่อง  ",
-                        style: "headerLeft"
-                      },
-                      {
-                        text:
-                          "\t .................................................. \n",
-                        style: "middleSubHeader"
-                      },
-
-                      {
-                        text: "check_box_outline_blank",
-                        style: "symbol1"
-                      },
-                      {
-                        text: " ไม่อนุมัติ เนื่องจาก ",
-                        style: "headerLeft"
-                      },
-                      {
-                        text:
-                          "\t\t .................................................. \n",
-                        style: "middleSubHeader"
-                      },
-                      {
-                        text:
-                          "\t\t .................................................................................................... \n",
-                        style: "headerLeft"
-                      }
-                    ]
-                  },
-                  {
-                    text: [
-                      {
-                        text: "ความเห็นฝ่ายบริหาร \n",
-                        style: "middleSubHeader"
-                      },
-                      {
-                        text: "check_box_outline_blank",
-                        style: "symbol1"
-                      },
-                      {
-                        text: " อนุมัติ \n",
-                        style: "headerLeft"
-                      },
-                      {
-                        text: "check_box_outline_blank",
-                        style: "symbol1"
-                      },
-                      {
-                        text: " ขอข้อมูลเพิ่มเติมเรื่อง  ",
-                        style: "headerLeft"
-                      },
-                      {
-                        text:
-                          "\t .................................................. \n",
-                        style: "middleSubHeader"
-                      },
-
-                      {
-                        text: "check_box_outline_blank",
-                        style: "symbol1"
-                      },
-                      {
-                        text: " ไม่อนุมัติ เนื่องจาก ",
-                        style: "headerLeft"
-                      },
-                      {
-                        text:
-                          "\t\t ...................................................... \n",
-                        style: "middleSubHeader"
-                      },
-                      {
-                        text:
-                          "\t\t ................................................................................................ \n",
-                        style: "headerLeft"
-                      }
-                    ]
-                  }
-                ]
-              ]
-            }
-          }
-        ],
-        defaultStyle: {
-          font: "THSarabunNew",
-          columnGap: 20
-        },
-        styles: {
-          header: {
-            fontSize: 20,
-            bold: true,
-            alignment: "center"
-          },
-          tableExample: {
-            margin: [0, 0, 0, 0]
-          },
-          headerRight: {
-            fontSize: 13,
-            alignment: "right"
-          },
-          headerLeft: {
-            fontSize: 13,
-            alignment: "left"
-          },
-          subheader: {
-            fontSize: 13,
-            bold: true
-          },
-          middleSubHeader: {
-            fontSize: 13,
-            bold: true,
-            alignment: "center"
-          },
-          fontawesome: {
-            font: "FontAwesome",
-            color: "#656565"
-          },
-          icon: { font: "Fontello" },
-          quote: {
-            italics: true
-          },
-          small: {
-            fontSize: 8
-          },
-          text: {
-            fontSize: 15
-          },
-          invoiceNumber: {
-            alignment: "right"
-          },
-          exText: {
-            alignment: "justify"
-          }
-        }
-      };
-
-      dd.styles.symbol = { font: "FontAwesome", color: "red" };
-      dd.styles.symbol1 = { font: "MaterialIconsRegular" };
-      pdfMake.createPdf(dd).open();
-      const pdfDocGenerator = pdfMake.createPdf(dd);
-      // pdfDocGenerator.getBase64(data => {
-      //   alert(data);
-      // });
+    createPdf() {
+      let route = this.$router.resolve({
+        name: "a"
+      });
+      window.open(route.href, "_blank");
     }
   },
-  watch: {},
+  watch: {
+    search(value) {
+      console.log("search", value);
+
+      this.items = this.itemsCopy;
+      this.checkItemStatus();
+      this.checkItemDate();
+      this.checkItemSearch();
+      this.checkItemIncome();
+    },
+    select(value) {
+      this.items = this.itemsCopy;
+      this.checkItemStatus();
+      this.checkItemDate();
+      this.checkItemIncome();
+      this.checkItemSearch();
+    },
+    startDate(value) {
+      this.max_date = "";
+      this.$refs.menuStart.save(this.startDate);
+      this.items = this.itemsCopy;
+      this.checkItemStatus();
+      this.checkItemDate();
+      this.checkItemIncome();
+      this.checkItemSearch();
+      console.log("value", value);
+      this.min_date = value;
+    },
+    stoptDate(value) {
+      this.min_date = "";
+      this.$refs.menuStop.save(this.stoptDate);
+      this.items = this.itemsCopy;
+      this.checkItemStatus();
+      this.checkItemDate();
+      console.log("value", value);
+      this.max_date = value;
+    },
+    selectIncome(value) {
+      console.log("value", value);
+
+      this.items = this.itemsCopy;
+      this.checkItemStatus();
+      this.checkItemDate();
+      this.checkItemIncome();
+      this.checkItemSearch();
+    }
+  },
   created() {
-    pdfMake.fonts = {
-      THSarabunNew: {
-        normal: "THSarabunNew.ttf",
-        bold: "THSarabunNew-Bold.ttf",
-        italics: "THSarabunNew-Italic.ttf",
-        bolditalics: "THSarabunNew-BoldItalic.ttf"
-      },
-      Roboto: {
-        normal: "Roboto-Regular.ttf",
-        bold: "Roboto-Medium.ttf",
-        italics: "Roboto-Italic.ttf",
-        bolditalics: "Roboto-MediumItalic.ttf"
-      },
-      Fontello: {
-        normal: "fontello.ttf",
-        bold: "fontello.ttf",
-        italics: "fontello.ttf",
-        bolditalics: "fontello.ttf"
-      },
-      FontAwesome: {
-        normal: "fontawesome-webfont.ttf",
-        bold: "fontawesome-webfont.ttf",
-        italics: "fontawesome-webfont.ttf",
-        bolditalics: "fontawesome-webfont.ttf"
-      },
-      Wingdng2: {
-        normal: "wingdng2.ttf",
-        bold: "wingdng2.ttf",
-        italics: "wingdng2.ttf",
-        bolditalics: "wingdng2.ttf"
-      },
-      MaterialIconsRegular: {
-        normal: "MaterialIcons-Regular.ttf"
-      }
-    };
-
-    pdfMake.vfs = pdfFonts.pdfMake.vfs;
-
     var obj = JSON.parse(Decode.decode(this.$cookies.get("user")));
-    console.log("jsonObj", obj);
     this.userId = obj.userid;
     this.getAllForm();
   }
@@ -1020,5 +966,21 @@ export default {
 }
 >>> .btn-pdf > .v-btn__content {
   justify-content: left;
+}
+
+.approved.อนุมัติ {
+  background-color: #7cc144;
+}
+
+.approved.รออนุมัติ {
+  background-color: #f9a825;
+}
+
+.approved.ไม่อนุมัติ {
+  background-color: red;
+}
+
+>>> .v-data-table thead tr th {
+  color: rgba(0, 0, 0, 1) !important;
 }
 </style>
