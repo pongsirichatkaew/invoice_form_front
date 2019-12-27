@@ -4,7 +4,7 @@
       <v-layout row wrap class="ml-3 mr-3 pt-6 pb-6">
         <v-flex xs12>
           <v-layout row wrap>
-            <v-flex xs12 lg9>
+            <v-flex xs12 md7 lg7 xl9>
               <v-text-field
                 class="ml-9 pr-8"
                 v-model="search"
@@ -15,9 +15,9 @@
                 hide-details
               ></v-text-field>
             </v-flex>
-            <v-flex xs9 lg2>
+            <v-flex xs9 md3 lg3 xl2>
               <v-btn
-                class="ml-9 mt-2"
+                :class="{'ml-9 mt-3' : $vuetify.breakpoint.xsOnly,'ml-9 mt-2' : $vuetify.breakpoint.smOnly,' mt-2' : $vuetify.breakpoint.mdAndUp} "
                 elevation="2"
                 large
                 outlined
@@ -28,8 +28,11 @@
                 <!-- <v-icon right>mdi-arrow-down</v-icon> -->
               </v-btn>
             </v-flex>
-            <v-flex xs2 lg1>
-              <v-btn class="mt-3 primary" elevation="4" @click="getDialog">เพิ่มรายการ</v-btn>
+            <v-flex xs2 lg2 xl1>
+              <v-btn class="mt-4 primary" elevation="4" :disabled="isLoadingAll" @click="getDialog">
+                <span v-if="$vuetify.breakpoint.smAndUp">เพิ่มรายการ</span>
+                <v-icon v-if="$vuetify.breakpoint.xsOnly">mdi-plus</v-icon>
+              </v-btn>
             </v-flex>
 
             <v-flex v-if="advancedSearch" xs12 lg3 class="pl-8 pt-6 pr-8">
@@ -311,61 +314,52 @@
         <v-container>
           <v-layout row wrap>
             <v-container grid-list-xs>
-              <v-flex xs12>
-                <p>ชื่อผู้อนุมัติ: {{employee_approved_name}}</p>
-                <!-- <v-text-field
-                  v-model="employee_approved_name"
-                  label="ชื่อผู้อนุมัติ"
-                  outlined
-                  disabled
-                  required
-                ></v-text-field>-->
-              </v-flex>
+              <v-card outlined>
+                <v-card-text>
+                  <v-flex xs12>
+                    <p class="text--primary subtitle-1">ชื่อผู้อนุมัติ: {{employee_approved_name}}</p>
+                  </v-flex>
 
-              <v-flex xs12>
-                <p>รหัสพนักงานผู้อนุมัติ: {{employee_approved.code}}</p>
-                <!-- <v-text-field
-                  v-model="employee_approved.code"
-                  label="รหัสพนักงานผู้อนุมัติ"
-                  outlined
-                  disabled
-                  required
-                ></v-text-field>-->
-              </v-flex>
-              <v-flex xs12 v-if="comment.length > 0">
-                <p>เหตุผล: {{comment}}</p>
-                <!-- <v-text-field
-                  v-model="employee_approved.code"
-                  label="รหัสพนักงานผู้อนุมัติ"
-                  outlined
-                  disabled
-                  required
-                ></v-text-field>-->
-              </v-flex>
-              <v-flex xs12 v-if="employee_take_from_name.length > 0">
-                <p>ชื่อผู้คืนเอกสาร: {{employee_take_from_name}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
+                  <v-flex xs12>
+                    <p
+                      class="text--primary subtitle-1"
+                    >รหัสพนักงานผู้อนุมัติ: {{employee_approved.code}}</p>
+                  </v-flex>
+                  <v-flex xs12 v-if="comment.length > 0">
+                    <p class="text--primary subtitle-1">เหตุผล: {{comment}}</p>
+                  </v-flex>
+                </v-card-text>
+              </v-card>
+              <v-card v-if="employee_take_from_code.length > 0" class="mt-3" outlined>
+                <v-card-text>
+                  <v-flex xs12 v-if="employee_take_from_name.length > 0">
+                    <p
+                      class="text--primary subtitle-1"
+                    >ชื่อผู้คืนเอกสาร: {{employee_take_from_name}}</p>
+                  </v-flex>
 
-              <v-flex xs12 v-if="employee_take_from_code.length > 0">
-                <p>รหัสพนักงานของผู้คืนเอกสาร: {{employee_take_from_code}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
+                  <v-flex xs12 v-if="employee_take_from_code.length > 0">
+                    <p
+                      class="text--primary subtitle-1"
+                    >รหัสพนักงานของผู้คืนเอกสาร: {{employee_take_from_code}}</p>
+                  </v-flex>
+                </v-card-text>
+              </v-card>
+              <v-card v-if="employee_take_by_code.length > 0" class="mt-3" outlined>
+                <v-card-text>
+                  <v-flex xs12 v-if="employee_take_by_name.length > 0">
+                    <p class="text--primary subtitle-1">ชื่อผู้รับเอกสาร: {{employee_take_by_name}}</p>
+                  </v-flex>
 
-              <v-flex xs12 v-if="employee_take_by_name.length > 0">
-                <p>ชื่อผู้รับเอกสาร: {{employee_take_by_name}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
+                  <v-flex xs12 v-if="employee_take_by_code.length > 0">
+                    <p class="text--primary subtitle-1">รหัสพนักงานผู้รับ: {{employee_take_by_code}}</p>
+                  </v-flex>
 
-              <v-flex xs12 v-if="employee_take_by_code.length > 0">
-                <p>รหัสพนักงานผู้รับ: {{employee_take_by_code}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
-
-              <v-flex xs12 v-if="employee_take_at.length > 0">
-                <p>เวลา: {{employee_take_at}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
+                  <v-flex xs12 v-if="employee_take_at.length > 0">
+                    <p class="text--primary subtitle-1">เวลา: {{employee_take_at}}</p>
+                  </v-flex>
+                </v-card-text>
+              </v-card>
             </v-container>
           </v-layout>
         </v-container>
@@ -729,9 +723,19 @@ export default {
             isIncome: isIncome,
             invoice: form.invoice,
             income: form.change_income === 1 ? true : false,
-            invoiceFull: form.full === 1 ? true : false,
+            invoiceFull:
+              form.change_income === 1
+                ? form.full === 1
+                  ? true
+                  : false
+                : false,
             invoiceFullAmount: form.full_text,
-            invoicePartial: form.some === 1 ? true : false,
+            invoicePartial:
+              form.change_income === 1
+                ? form.some === 1
+                  ? true
+                  : false
+                : false,
             invoicePartialAmount: form.some_text,
             notIncome: form.not_change_income === 1 ? true : false,
             otherIncome: form.other === 1 ? true : false,

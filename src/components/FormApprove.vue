@@ -4,7 +4,7 @@
       <v-layout row wrap class="ml-3 mr-3 pt-6">
         <v-flex xs12>
           <v-layout row wrap>
-            <v-flex xs12 lg9>
+            <v-flex xs12 md7 lg9 xl10>
               <v-text-field
                 class="ml-9 pr-8"
                 v-model="search"
@@ -15,9 +15,9 @@
                 hide-details
               ></v-text-field>
             </v-flex>
-            <v-flex xs12 lg2>
+            <v-flex xs9 md3 lg3 xl2>
               <v-btn
-                class="ml-9 mt-2"
+                :class="{'ml-9 mt-3' : $vuetify.breakpoint.xsOnly,'ml-9 mt-2' : $vuetify.breakpoint.smOnly,' mt-2' : $vuetify.breakpoint.mdAndUp} "
                 elevation="2"
                 large
                 outlined
@@ -112,19 +112,7 @@
       :items-per-page="itemsPerPage"
       :items="items"
     >
-      <!-- <template v-slot:item.status="{ item }">
-          <v-chip :class="`ma-2 white--text approved ${item.status}`">{{item.status}}</v-chip>
-      </template>-->
       <template v-slot:item.action="{ item }">
-        <!-- <v-btn
-          v-if="item.status !== 'รอส่งคืนเอกสาร' && item.status !== 'คืนเอกสารเรียบร้อยแล้ว' "
-          elevation="6"
-          class="btn-document white--text"
-          width="180"
-          :color="item.receiveDocumentStatus"
-          :disabled="item.receiveDocumentDisabled"
-          @click="openConfirmForm(item)"
-        >{{item.receiveDocument}}</v-btn>-->
         <v-chip
           class="ma-2 white--text"
           :color="item.colorShip"
@@ -134,14 +122,6 @@
       <template v-slot:item.edit="{ item }">
         <v-icon small @click="openInfoDialog(item)">mdi-file-document</v-icon>
       </template>
-      <!-- <template v-slot:item.take="{ item }">
-        <v-chip
-          v-if="item.status === 'รอส่งคืนเอกสาร' || item.status === 'คืนเอกสารเรียบร้อยแล้ว'"
-          class="ma-2 white--text"
-          :color="item.colorShip"
-          @click="openTakeForm(item)"
-        >{{item.status}}</v-chip>
-      </template>-->
     </v-data-table>
     <v-dialog v-model="confirmDialog" persistent max-width="600px">
       <v-card>
@@ -149,7 +129,7 @@
           <v-toolbar-title>ยืนยันการรับเอกสาร</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <v-container grid-list-md>
+          <v-container>
             <v-layout wrap>
               <v-flex xs12 sm12 md12>
                 <v-text-field
@@ -162,12 +142,35 @@
               <v-flex xs12 sm12 d-flex>
                 <v-text-field label="รหัสพนักงาน*" v-model="userId" disabled></v-text-field>
               </v-flex>
-              <v-flex xs12 sm12 md12>
-                <v-text-field label="รหัสพนักงานของผู้รับ*" required v-model="userIdConfirm"></v-text-field>
+              <v-flex xs12 sm12 md10>
+                <v-form ref="userAdd">
+                  <v-text-field
+                    label="รหัสพนักงานของผู้รับ*"
+                    :rules="employeeRules"
+                    required
+                    v-model="userIdConfirm"
+                  ></v-text-field>
+                </v-form>
+              </v-flex>
+              <v-flex xs12 lg2>
+                <v-btn class="mt-3 ml-3" outlined @click="searchEmployee">
+                  <v-icon>mdi-magnify</v-icon>
+                </v-btn>
               </v-flex>
             </v-layout>
+            <v-card outlined class="mx-auto">
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-title class="mb-3">รหัสพนักงาน: {{employeeConfirm.code}}</v-list-item-title>
+                  <v-list-item-title
+                    class="mb-3"
+                  >ชื่อพนักงาน: {{employeeConfirm.thainame}} {{employeeConfirm.thlastname}}</v-list-item-title>
+                  <v-list-item-title class="mb-3">ฝ่าย: {{employeeConfirm.orgname}}</v-list-item-title>
+                  <v-list-item-title class="mb-3">อีเมลล์: {{employeeConfirm.email}}</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-card>
           </v-container>
-          <small>*indicates required field</small>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -179,10 +182,10 @@
     <v-dialog v-model="takeDialog" persistent max-width="600px">
       <v-card>
         <v-toolbar text>
-          <v-toolbar-title>ยืนยันการส่งคืนเอกสาร</v-toolbar-title>
+          <v-toolbar-title>เอกสาร</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <v-container grid-list-md>
+          <v-container>
             <v-layout wrap>
               <v-flex xs12 sm12 md12>
                 <p>เลขที่เอกสาร: {{confirmInvoiceNumber}}</p>
@@ -193,20 +196,72 @@
               <v-flex xs12 v-if="reasonTake !== ''">
                 <p>เหตุผล: {{reasonTake}}</p>
               </v-flex>
-              <v-flex xs12 sm12 md12>
-                <v-text-field label="รหัสพนักงานของผู้คืนเอกสาร*" required v-model="userIdTakeFrom"></v-text-field>
+              <v-flex xs12 lg10>
+                <v-form ref="formReturn">
+                  <v-text-field
+                    :rules="employeeRules"
+                    label="รหัสพนักงานของผู้คืนเอกสาร*"
+                    required
+                    v-model="userIdTakeFrom"
+                  ></v-text-field>
+                </v-form>
               </v-flex>
-              <v-flex xs12 sm12 md12>
-                <v-text-field label="รหัสพนักงานของผู้รับเอกสาร*" required v-model="userIdConfirm"></v-text-field>
+              <v-flex xs12 lg2>
+                <v-btn class="mt-3 ml-3" outlined @click="searchEmployeeFrom">
+                  <v-icon>mdi-magnify</v-icon>
+                </v-btn>
+              </v-flex>
+              <v-flex xs12>
+                <v-card outlined class="mx-auto">
+                  <v-list-item>
+                    <v-list-item-content>
+                      <v-list-item-title class="mb-3">รหัสพนักงาน: {{employeeTakeFrom.code}}</v-list-item-title>
+                      <v-list-item-title
+                        class="mb-3"
+                      >ชื่อพนักงาน: {{employeeTakeFrom.thainame}} {{employeeTakeFrom.thlastname}}</v-list-item-title>
+                      <v-list-item-title class="mb-3">ฝ่าย: {{employeeTakeFrom.orgname}}</v-list-item-title>
+                      <v-list-item-title class="mb-3">อีเมลล์: {{employeeTakeFrom.email}}</v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                </v-card>
+              </v-flex>
+
+              <v-flex xs12 lg10>
+                <v-form ref="formRecieve">
+                  <v-text-field
+                    :rules="employeeRules"
+                    label="รหัสพนักงานของผู้รับเอกสาร*"
+                    required
+                    v-model="userIdConfirm"
+                  ></v-text-field>
+                </v-form>
+              </v-flex>
+              <v-flex xs12 lg2>
+                <v-btn class="mt-3 ml-3" outlined @click="searchEmployeeConfirm">
+                  <v-icon>mdi-magnify</v-icon>
+                </v-btn>
+              </v-flex>
+              <v-flex xs12>
+                <v-card outlined class="mx-auto">
+                  <v-list-item>
+                    <v-list-item-content>
+                      <v-list-item-title class="mb-3">รหัสพนักงาน: {{employeeConfirm.code}}</v-list-item-title>
+                      <v-list-item-title
+                        class="mb-3"
+                      >ชื่อพนักงาน: {{employeeConfirm.thainame}} {{employeeConfirm.thlastname}}</v-list-item-title>
+                      <v-list-item-title class="mb-3">ฝ่าย: {{employeeConfirm.orgname}}</v-list-item-title>
+                      <v-list-item-title class="mb-3">อีเมลล์: {{employeeConfirm.email}}</v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                </v-card>
               </v-flex>
             </v-layout>
           </v-container>
-          <small>*indicates required field</small>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="takeDialog = false">ปิด</v-btn>
-          <v-btn class="success" text @click="takeForm()" :disabled="checkEmployeeId">บันทึก</v-btn>
+          <v-btn color="blue darken-1" text @click="closeTakeDialog">ปิด</v-btn>
+          <v-btn class="success" text @click="takeForm()" :disabled="checkEmployeeTake">บันทึก</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -332,30 +387,38 @@
         <v-container>
           <v-layout row wrap>
             <v-container grid-list-xs>
-              <v-flex xs12 v-if="employee_take_from_name.length > 0">
-                <p>ชื่อผู้คืนเอกสาร: {{employee_take_from_name}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
+              <v-card outlined>
+                <v-card-text>
+                  <v-flex xs12 v-if="employee_take_from_name.length > 0">
+                    <p
+                      class="text--primary subtitle-1"
+                    >ชื่อผู้คืนเอกสาร: {{employee_take_from_name}}</p>
+                  </v-flex>
 
-              <v-flex xs12 v-if="employee_take_from_code.length > 0">
-                <p>รหัสพนักงานของผู้คืนเอกสาร: {{employee_take_from_code}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
+                  <v-flex xs12 v-if="employee_take_from_code.length > 0">
+                    <p
+                      class="text--primary subtitle-1"
+                    >รหัสพนักงานของผู้คืนเอกสาร: {{employee_take_from_code}}</p>
+                  </v-flex>
+                </v-card-text>
+              </v-card>
+              <v-card class="mt-3" outlined>
+                <v-card-text>
+                  <v-flex xs12 v-if="employee_take_by_name.length > 0">
+                    <p class="text--primary subtitle-1">ชื่อผู้รับเอกสาร: {{employee_take_by_name}}</p>
+                  </v-flex>
 
-              <v-flex xs12 v-if="employee_take_by_name.length > 0">
-                <p>ชื่อผู้รับเอกสาร: {{employee_take_by_name}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
+                  <v-flex xs12 v-if="employee_take_by_code.length > 0">
+                    <p
+                      class="text--primary subtitle-1"
+                    >รหัสพนักงานของผู้รับคืนเอกสาร: {{employee_take_by_code}}</p>
+                  </v-flex>
 
-              <v-flex xs12 v-if="employee_take_by_code.length > 0">
-                <p>รหัสพนักงานของผู้รับคืนเอกสาร: {{employee_take_by_code}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
-
-              <v-flex xs12 v-if="employee_take_at.length > 0">
-                <p>เวลา: {{employee_take_at}}</p>
-                <!-- <v-text-field v-model="comment" label="เหตุผล" outlined disabled required></v-text-field> -->
-              </v-flex>
+                  <v-flex xs12 v-if="employee_take_at.length > 0">
+                    <p class="text--primary subtitle-1">เวลา: {{employee_take_at}}</p>
+                  </v-flex>
+                </v-card-text>
+              </v-card>
             </v-container>
           </v-layout>
         </v-container>
@@ -381,6 +444,8 @@ export default {
   data() {
     return {
       commentApproveRules: [v => !!v || "กรุณาใส่เหตุผล"],
+      employeeRules: [v => !!v || "กรุณาใส่รหัสพนักงาน"],
+
       itemsPerPage: 25,
       select: "",
       selectIncome: "",
@@ -451,6 +516,7 @@ export default {
       isCommentApprove: false,
       userIdConfirm: "",
       userIdTakeFrom: "",
+      employeeTakeFrom: {},
       employee: {},
       startDate: "",
       stoptDate: "",
@@ -470,7 +536,10 @@ export default {
       employee_take_at: "",
       employee_take_from_name: "",
       employee_take_from: {},
-      employee_take_from_code: ""
+      employee_take_from_code: "",
+      employeeConfirm: {},
+      disabledEmployeeConfirm: true,
+      disabledEmployeeTake: false
     };
   },
   components: {
@@ -488,7 +557,20 @@ export default {
       }
     },
     checkEmployeeId() {
-      if (this.isNormalInteger(this.userIdConfirm)) {
+      if (
+        this.isNormalInteger(this.userIdConfirm) &&
+        !this.disabledEmployeeConfirm
+      ) {
+        return false;
+      }
+      return true;
+    },
+    checkEmployeeTake() {
+      if (
+        this.isNormalInteger(this.userIdConfirm) &&
+        !this.disabledEmployeeConfirm &&
+        !this.disabledEmployeeTake
+      ) {
         return false;
       }
       return true;
@@ -757,6 +839,71 @@ export default {
       this.$store.commit("updateUpdatedialog", false);
       this.$store.commit("clearFormData");
     },
+    async searchEmployee() {
+      try {
+        this.$refs.userAdd.validate();
+        let result = await this.axios.get(
+          process.env.VUE_APP_API_INET + `/employee/${this.userIdConfirm}`,
+          {
+            headers: { Authorization: "d0aa5a1d-a58b-4a45-9c99-1e1007408ef4" }
+          }
+        );
+        this.employeeConfirm = result.data.employee_detail[0];
+        this.disabledEmployeeConfirm = false;
+        console.log("result", this.employee);
+      } catch (error) {
+        if (error.response) {
+          this.colorSnackbar = "red";
+          this.disabledEmployeeConfirm = true;
+
+          this.textSnackbar = error.response.data.message;
+          this.snackbar = true;
+        }
+      }
+    },
+    async searchEmployeeFrom() {
+      try {
+        this.$refs.formReturn.validate();
+        let result = await this.axios.get(
+          process.env.VUE_APP_API_INET + `/employee/${this.userIdTakeFrom}`,
+          {
+            headers: { Authorization: "d0aa5a1d-a58b-4a45-9c99-1e1007408ef4" }
+          }
+        );
+        this.employeeTakeFrom = result.data.employee_detail[0];
+        this.disabledEmployeeTake = false;
+        console.log("result", this.employeeTakeFrom);
+      } catch (error) {
+        if (error.response) {
+          this.colorSnackbar = "red";
+          this.disabledEmployeeTake = true;
+          this.textSnackbar = error.response.data.message;
+          this.snackbar = true;
+        }
+      }
+    },
+    async searchEmployeeConfirm() {
+      try {
+        this.$refs.formRecieve.validate();
+        let result = await this.axios.get(
+          process.env.VUE_APP_API_INET + `/employee/${this.userIdConfirm}`,
+          {
+            headers: { Authorization: "d0aa5a1d-a58b-4a45-9c99-1e1007408ef4" }
+          }
+        );
+        this.employeeConfirm = result.data.employee_detail[0];
+        this.disabledEmployeeConfirm = false;
+        console.log("result", this.employee);
+      } catch (error) {
+        if (error.response) {
+          this.colorSnackbar = "red";
+          this.disabledEmployeeConfirm = true;
+
+          this.textSnackbar = error.response.data.message;
+          this.snackbar = true;
+        }
+      }
+    },
     async getAllInvoiceForm() {
       this.isLoadingAll = true;
       try {
@@ -881,6 +1028,8 @@ export default {
         this.employee = form.employee;
         this.confirmInvoiceNumber = form.invoiceDoc;
         this.userIdConfirm = "";
+        this.employeeConfirm = {};
+
         this.confirmDialog = true;
       } else {
         Swal.fire({
@@ -924,11 +1073,24 @@ export default {
         this.employee = form.employee;
         this.confirmInvoiceNumber = form.invoiceDoc;
         this.userIdConfirm = "";
+        if (typeof this.$refs.userAdd != "undefined") {
+          this.$refs.userAdd.reset();
+        }
         this.confirmDialog = true;
       } else if (form.status === "รอส่งคืนเอกสาร") {
+        if (typeof this.$refs.formReturn != "undefined") {
+          this.$refs.formReturn.reset();
+        }
+        if (typeof this.$refs.formRecieve != "undefined") {
+          this.$refs.formRecieve.reset();
+        }
         this.takeDialog = true;
         this.employee = form.employee;
+        this.employeeConfirm = {};
+        this.employeeTakeFrom = {};
         this.confirmInvoiceNumber = form.invoiceDoc;
+        this.disabledEmployeeConfirm = true;
+        this.disabledEmployeeTake = true;
         this.userIdConfirm = "";
         this.userIdTakeFrom = "";
         this.reasonTake = form.comment;
@@ -945,6 +1107,9 @@ export default {
         }
         console.log(form.employee_take_from);
       }
+    },
+    closeTakeDialog() {
+      this.takeDialog = false;
     },
     async takeForm() {
       try {

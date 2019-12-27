@@ -43,7 +43,7 @@
       </tr>
 
       <tr class="fcenter">
-        <td class="sign" colspan="2">ลงชื่อ ................................... ผู้ตรวจสอบข้อมูล</td>
+        <td class="sign" colspan="2">ลงชื่อ ................................... ผู้ตรวจข้อมูล</td>
         <td
           class="sign"
           colspan="2"

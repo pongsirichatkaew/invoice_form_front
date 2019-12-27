@@ -7,7 +7,7 @@
             <v-toolbar-title style="color:white">แบบฟอร์มขออนุมัติลดหนี้ #{{index+1}}</v-toolbar-title>
 
             <v-spacer></v-spacer>
-            <v-btn v-if="!disabled" dark text icon @click="deleteCount(index)">
+            <v-btn v-if="!disabled && my_invoice.invoice.length>1" dark text icon  @click="deleteCount(index)">
               <v-icon>mdi-minus</v-icon>
             </v-btn>
             <v-btn v-if="!disabled" icon text color="white" dark @click="addInvoice()">

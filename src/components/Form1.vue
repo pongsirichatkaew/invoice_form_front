@@ -36,7 +36,7 @@
 
           <v-flex xs12 md3>
             <v-text-field
-              class=" pr-3"
+              class="pl-3 pr-3"
               v-model="my_invoice.customerName"
               :rules="customerNameRules"
               :disabled="disabled"

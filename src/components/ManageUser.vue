@@ -2,26 +2,45 @@
   <div>
     <v-dialog v-model="dialog" max-width="600px">
       <v-card>
-        <v-toolbar text>
+        <v-toolbar>
           <v-toolbar-title>เพิ่มผู้จัดการข้อมูล</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <v-container grid-list-md>
-            <v-layout wrap>
-              <v-flex xs12 sm6 md4>
+          <v-layout justify-center row wrap>
+            <v-flex xs12 lg5>
+              <v-form ref="userAdd">
                 <v-text-field
+                  class="mr-1 mt-3"
                   label="รหัสพนักงาน*"
+                  v-on:keyup.enter="searchEmployee"
                   required
                   :rules="addUserRules"
                   v-model="userIdAdd"
                 ></v-text-field>
-              </v-flex>
-              <v-flex xs12 sm6 d-flex>
-                <v-select v-model="selectRole" :items="items" label="ตำแหน่ง"></v-select>
-              </v-flex>
-            </v-layout>
-          </v-container>
-          <small>*indicates required field</small>
+              </v-form>
+            </v-flex>
+            <v-flex xs12 lg5>
+              <v-select class="mr-1 mt-3" v-model="selectRole" :items="items" label="ตำแหน่ง"></v-select>
+            </v-flex>
+            <v-flex xs12 lg2>
+              <v-btn class="mt-6 ml-3" outlined @click="searchEmployee">
+                <v-icon>mdi-magnify</v-icon>
+              </v-btn>
+            </v-flex>
+          </v-layout>
+
+          <v-card outlined class="mx-auto">
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title class="mb-3">รหัสพนักงาน: {{employee.code}}</v-list-item-title>
+                <v-list-item-title
+                  class="mb-3"
+                >ชื่อพนักงาน: {{employee.thainame}} {{employee.thlastname}}</v-list-item-title>
+                <v-list-item-title class="mb-3">ฝ่าย: {{employee.orgname}}</v-list-item-title>
+                <v-list-item-title class="mb-3">อีเมลล์: {{employee.email}}</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-card>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -99,29 +118,6 @@
             v-if="userId!==item.code && uesrRole !=2"
           >mdi-delete</v-icon>
         </template>
-        <!-- <template v-slot:items="props">
-          <td>{{ props.item.code }}</td>
-          <td>{{ props.item.thainame }}</td>
-          <td>{{ props.item.engname }}</td>
-          <td>{{ props.item.email }}</td>
-          <td>{{ props.item.phonenumber }}</td>
-          <td>{{ props.item.position }}</td>
-          <td>{{ props.item.role }}</td>
-
-          <td class="justify-center layout px-0">
-            <v-icon
-              small
-              class="mr-2"
-              @click="editUser(props.item)"
-              v-if="userId!==props.item.code && uesrRole !=2 "
-            >edit</v-icon>
-            <v-icon
-              small
-              @click="deleteUser(props.item)"
-              v-if="userId!==props.item.code && uesrRole !=2"
-            >delete</v-icon>
-          </td>
-        </template>-->
       </v-data-table>
     </v-card-text>
     <v-snackbar v-model="snackbar" :color="colorSnackbar" top right>
@@ -173,7 +169,9 @@ export default {
       ],
       items: [],
       selectRole: "ผู้จัดการข้อมูล",
-      isLoading: false
+      isLoading: false,
+      employee: {},
+      disabledEmployee: true
     };
   },
   methods: {
@@ -182,6 +180,10 @@ export default {
     },
     clickOpenInsertDialog() {
       this.dialog = true;
+      if (typeof this.$refs.userAdd != "undefined") {
+        this.$refs.userAdd.reset();
+      }
+      this.disabledEmployee = true;
       this.userIdAdd = "";
     },
     async getAllUsers() {
@@ -218,8 +220,6 @@ export default {
           this.colorSnackbar = "red";
           this.text = error.response.data.result;
           this.snackbar = true;
-        } else if (error.request) {
-        } else {
         }
       }
     },
@@ -257,8 +257,6 @@ export default {
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.msg;
           this.snackbar = true;
-        } else if (error.request) {
-        } else {
         }
       }
     },
@@ -292,8 +290,6 @@ export default {
           this.colorSnackbar = "red";
           this.textSnackbar = error.response.data.msg;
           this.snackbar = true;
-        } else if (error.request) {
-        } else {
         }
       }
     },
@@ -341,11 +337,34 @@ export default {
           }
         }
       });
+    },
+    async searchEmployee() {
+      try {
+        this.$refs.userAdd.validate();
+
+        let result = await this.axios.get(
+          process.env.VUE_APP_API_INET + `/employee/${this.userIdAdd}`,
+          {
+            headers: { Authorization: "d0aa5a1d-a58b-4a45-9c99-1e1007408ef4" }
+          }
+        );
+        this.employee = result.data.employee_detail[0];
+        this.disabledEmployee = false;
+        console.log("result", this.employee);
+      } catch (error) {
+        if (error.response) {
+          this.colorSnackbar = "red";
+          this.disabledEmployee = true;
+
+          this.textSnackbar = error.response.data.message;
+          this.snackbar = true;
+        }
+      }
     }
   },
   computed: {
     checkEmployeeId() {
-      if (this.isNormalInteger(this.userIdAdd)) {
+      if (this.isNormalInteger(this.userIdAdd) && !this.disabledEmployee) {
         return false;
       }
       return true;
