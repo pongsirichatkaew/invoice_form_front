@@ -12,7 +12,7 @@
     "core-js": "^2.6.5",
     "html2canvas": "^1.0.0-rc.3",
     "jspdf": "^1.5.3",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "pdfmake": "^0.1.58",
     "pdfmake-unicode": "0.0.1",
     "register-service-worker": "^1.6.2",
